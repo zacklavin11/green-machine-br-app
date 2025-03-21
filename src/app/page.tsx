@@ -159,6 +159,13 @@ export default function Dashboard() {
               if (reportDate.getMonth() === currentDate.getMonth() && 
                   reportDate.getFullYear() === currentDate.getFullYear()) {
                 reportDays.add(reportDate.getDate());
+                
+                // Consider days with reports as active days too
+                const reportDay = reportDate.getDate();
+                if (!activeCalendarDays.includes(reportDay)) {
+                  // Update local state with the additional active day
+                  setActiveCalendarDays(prev => [...prev, reportDay].sort((a, b) => a - b));
+                }
               }
             });
             
@@ -168,7 +175,8 @@ export default function Dashboard() {
                 today.getFullYear() === currentDate.getFullYear()) {
               const todayDate = today.getDate();
               for (let i = 1; i < todayDate; i++) {
-                if (!reportDays.has(i) && !activeCalendarDays.includes(i)) {
+                // Only consider it missed if not in active days AND not in report days
+                if (!activeCalendarDays.includes(i) && !reportDays.has(i)) {
                   missedDaysList.push(i);
                 }
               }
@@ -178,7 +186,8 @@ export default function Dashboard() {
             ) {
               // If viewing a past month, days without reports or calendar marks are missed
               for (let i = 1; i <= daysInMonth; i++) {
-                if (!reportDays.has(i) && !activeCalendarDays.includes(i)) {
+                // Only consider it missed if not in active days AND not in report days
+                if (!activeCalendarDays.includes(i) && !reportDays.has(i)) {
                   missedDaysList.push(i);
                 }
               }
@@ -186,6 +195,62 @@ export default function Dashboard() {
             
             // Important: DON'T overwrite activeCalendarDays here to preserve user's manual calendar marks
             setMissedDays(missedDaysList);
+            
+            // Calculate completion rate (percentage of days in current month that have reports or are marked as active)
+            const calculateCompletionRate = () => {
+              // Only calculate for days up to today (or all days for past months)
+              const today = new Date();
+              const isCurrentMonth = currentDate.getMonth() === today.getMonth() && 
+                                    currentDate.getFullYear() === today.getFullYear();
+              
+              // Get days in current month
+              const daysInMonth = new Date(
+                currentDate.getFullYear(), 
+                currentDate.getMonth() + 1, 
+                0
+              ).getDate();
+              
+              // For current month, only consider days up to today
+              const totalDaysToConsider = isCurrentMonth ? today.getDate() : daysInMonth;
+              
+              // Count active days (combining calendar marked days and report days)
+              const combinedActiveDays = new Set([
+                ...activeCalendarDays,
+                ...Array.from(reportDays)
+              ]);
+              
+              // Filter to only include days up to the cutoff (today or end of month)
+              const validActiveDays = Array.from(combinedActiveDays).filter(day => day <= totalDaysToConsider);
+              
+              // Calculate percentage - avoid division by zero
+              const completionPercentage = totalDaysToConsider > 0 
+                ? Math.round((validActiveDays.length / totalDaysToConsider) * 100) 
+                : 0;
+              
+              return completionPercentage;
+            };
+            
+            // Get the completion rate
+            const completionRate = calculateCompletionRate();
+            
+            // Update streak data with the new completion rate
+            if (userProfile && userProfile.streakData) {
+              const updatedStreakData = {
+                ...userProfile.streakData,
+                completionRate,
+                totalReports: userReports.length
+              };
+              
+              // Update Firebase
+              await updateUserStreak(user.uid, updatedStreakData);
+              
+              // Update local state
+              setUserStats(prev => ({
+                ...prev,
+                completionRate,
+                totalReports: userReports.length
+              }));
+            }
           }
         } catch (err) {
           console.error("Error loading recent reports:", err);
@@ -207,6 +272,8 @@ export default function Dashboard() {
   // Helper function to calculate streak
   const calculateUserStreak = (reports: any[]): { currentStreak: number, longestStreak: number } => {
     if (!reports || !reports.length) return { currentStreak: 0, longestStreak: 0 };
+    
+    console.log(`Starting streak calculation with ${reports.length} reports`);
     
     // Sort reports by date (newest first)
     const sortedReports = [...reports].sort((a, b) => {
@@ -252,45 +319,89 @@ export default function Dashboard() {
       .map(dateStr => new Date(dateStr))
       .sort((a, b) => b.getTime() - a.getTime());
     
-    // Calculate current streak (must include today or yesterday)
-    const mostRecentReportDate = reportDates[0];
-    if (mostRecentReportDate) {
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
+    console.log(`Report dates:`, reportDates.map(d => d.toISOString().split('T')[0]));
+    
+    // For calendar view, handle streak calculation differently
+    // We need to check if the sorted days form a consecutive streak
+    
+    // Get all day numbers in descending order (for current month view)
+    const days = sortedReports.map(report => {
+      const date = report.createdAt instanceof Date 
+        ? report.createdAt 
+        : new Date(report.createdAt?.seconds ? report.createdAt.seconds * 1000 : Date.now());
+      return date.getDate();
+    }).sort((a, b) => b - a); // Sort in descending order
+    
+    console.log("Calendar days in descending order:", days);
+    
+    // For calendar view, check if today's date or yesterday's date is included
+    const todayDate = today.getDate();
+    const yesterdayDate = new Date(today);
+    yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+    const yesterdayDay = yesterdayDate.getDate();
+    
+    const isCurrentMonth = currentDate.getMonth() === today.getMonth() && 
+                           currentDate.getFullYear() === today.getFullYear();
+    
+    console.log(`Is current month: ${isCurrentMonth}`, {
+      currentDateMonth: currentDate.getMonth(),
+      todayMonth: today.getMonth(),
+      currentDateYear: currentDate.getFullYear(),
+      todayYear: today.getFullYear(),
+      todayDate,
+      yesterdayDay
+    });
+    
+    // Check if the most recent day is today or yesterday
+    // For calendar view (using days of month)
+    if (isCurrentMonth) {
+      // If viewing current month, check if we have today or yesterday
+      const hasTodayOrYesterday = days.includes(todayDate) || days.includes(yesterdayDay);
       
-      // For calendar days in the current month, we need to adjust date comparison
-      // to account for the fact that our simulated reports use the current month
-      const isCurrentMonth = currentDate.getMonth() === today.getMonth() && 
-                            currentDate.getFullYear() === today.getFullYear();
-      
-      // Handle streak calculation differently for the current month vs. historical data
-      if (isCurrentMonth) {
-        const isToday = mostRecentReportDate.getDate() === today.getDate();
-        const isYesterday = mostRecentReportDate.getDate() === today.getDate() - 1;
+      if (days.length > 0 && hasTodayOrYesterday) {
+        // Start with a streak of 1 for the most recent day
+        currentStreak = 1;
         
-        if (isToday || isYesterday) {
-          currentStreak = 1; // Start with 1 for the most recent day
+        // Sort days in descending order for the current month
+        const sortedDays = Array.from(new Set(days)).sort((a, b) => b - a);
+        console.log("Sorted unique days:", sortedDays);
+        
+        if (sortedDays.length > 1) {
+          // Start from second day (index 1) since we already counted the first day
+          let expectedDay = sortedDays[0] - 1;
           
-          // For consecutive days, we just need to check if the date is one less
-          let prevDay = mostRecentReportDate.getDate();
-          
-          for (let i = 1; i < reportDates.length; i++) {
-            const currentDayInStreak = reportDates[i].getDate();
+          for (let i = 1; i < sortedDays.length; i++) {
+            const currentDay = sortedDays[i];
+            console.log(`Checking streak: expectedDay=${expectedDay}, currentDay=${currentDay}`);
             
-            if (prevDay - currentDayInStreak === 1) {
-              // Consecutive day, continue streak
+            if (currentDay === expectedDay) {
+              // This is a consecutive day
               currentStreak++;
-              prevDay = currentDayInStreak;
+              expectedDay--;
+              console.log(`Consecutive day found, streak now: ${currentStreak}`);
             } else {
               // Break in streak
+              console.log(`Break in streak found: expected ${expectedDay}, found ${currentDay}`);
               break;
             }
           }
         }
-      } else {
-        // For historical data, use the original comparison method
+      }
+    } else {
+      // Historical data uses the original method with date objects
+      const mostRecentReportDate = reportDates[0];
+      if (mostRecentReportDate) {
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        
+        console.log(`Today: ${today.toISOString().split('T')[0]}`);
+        console.log(`Yesterday: ${yesterday.toISOString().split('T')[0]}`);
+        console.log(`Most recent report: ${mostRecentReportDate.toISOString().split('T')[0]}`);
+        
         const isToday = mostRecentReportDate.getTime() === today.getTime();
         const isYesterday = mostRecentReportDate.getTime() === yesterday.getTime();
+        
+        console.log(`Historical data check - isToday: ${isToday}, isYesterday: ${isYesterday}`);
         
         if (isToday || isYesterday) {
           currentStreak = 1; // Start with 1 for the most recent day
@@ -303,11 +414,15 @@ export default function Dashboard() {
             const diffTime = currentDate.getTime() - prevDate.getTime();
             const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
             
+            console.log(`Historical streak check: diffDays=${diffDays}`);
+            
             if (diffDays === 1) {
               // Consecutive day, continue streak
               currentStreak++;
+              console.log(`Historical consecutive day found, streak now: ${currentStreak}`);
             } else {
               // Break in streak
+              console.log(`Historical break in streak found: diffDays=${diffDays}`);
               break;
             }
           }
@@ -315,45 +430,49 @@ export default function Dashboard() {
       }
     }
     
-    // Calculate longest streak (similar logic as above, but for all reports)
-    if (reportDates.length > 0) {
+    // Calculate longest streak (similar logic as current streak)
+    if (isCurrentMonth && days.length > 0) {
+      // For current month view
+      const sortedDays = Array.from(new Set(days)).sort((a, b) => b - a);
+      
+      if (sortedDays.length > 0) {
+        tempStreak = 1;
+        let expectedDay = sortedDays[0] - 1;
+        
+        for (let i = 1; i < sortedDays.length; i++) {
+          const currentDay = sortedDays[i];
+          
+          if (currentDay === expectedDay) {
+            // This is a consecutive day
+            tempStreak++;
+            expectedDay--;
+          } else {
+            // Break in streak
+            longestStreak = Math.max(longestStreak, tempStreak);
+            tempStreak = 1;
+            expectedDay = currentDay - 1;
+          }
+        }
+      }
+    } else if (reportDates.length > 0) {
+      // Historical data uses the original method
       tempStreak = 1;
-      let prevDay = reportDates[0].getDate();
       
       for (let i = 1; i < reportDates.length; i++) {
-        const currentDay = reportDates[i].getDate();
+        const prevDateObj = reportDates[i-1];
+        const currentDateObj = reportDates[i];
         
-        // If this is the current month, we can simplify to checking sequential days
-        if (currentDate.getMonth() === reportDates[i].getMonth() && 
-            currentDate.getFullYear() === reportDates[i].getFullYear()) {
-          
-          if (prevDay - currentDay === 1) {
-            // Consecutive day
-            tempStreak++;
-          } else {
-            // Break in streak, update longest and reset temp
-            longestStreak = Math.max(longestStreak, tempStreak);
-            tempStreak = 1;
-          }
-          
-          prevDay = currentDay;
+        // Calculate days between reports
+        const diffTime = prevDateObj.getTime() - currentDateObj.getTime();
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 1) {
+          // Consecutive day
+          tempStreak++;
         } else {
-          // Standard comparison for historical data
-          const prevDateObj = reportDates[i-1];
-          const currentDateObj = reportDates[i];
-          
-          // Calculate days between reports
-          const diffTime = prevDateObj.getTime() - currentDateObj.getTime();
-          const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-          
-          if (diffDays === 1) {
-            // Consecutive day
-            tempStreak++;
-          } else {
-            // Break in streak, update longest and reset temp
-            longestStreak = Math.max(longestStreak, tempStreak);
-            tempStreak = 1;
-          }
+          // Break in streak, update longest and reset temp
+          longestStreak = Math.max(longestStreak, tempStreak);
+          tempStreak = 1;
         }
       }
     }
@@ -517,7 +636,7 @@ export default function Dashboard() {
   if (authLoading || isLoading) {
     return (
       <div className="p-8 flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#39e991]"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[var(--theme-color)]"></div>
       </div>
     );
   }
@@ -541,32 +660,13 @@ export default function Dashboard() {
 
   return (
     <div className="p-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-[var(--apple-gray-900)] dark:text-white">90 Day Run Tracker</h1>
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center">
-            <User className="h-5 w-5 text-[var(--apple-gray-500)] mr-2" />
-            <span className="text-sm text-[var(--apple-gray-700)] dark:text-[var(--apple-gray-300)]">
-              {user.displayName || user.email}
-            </span>
-          </div>
-          <Link
-            href="/reports/new"
-            className="apple-button-green flex items-center"
-          >
-            <PlusCircle className="h-5 w-5 mr-2" />
-            New Report
-          </Link>
-        </div>
-      </div>
-
       {/* User Greeting */}
       <div className="apple-card p-8 mb-8 text-center">
-        <h2 className="text-4xl font-bold text-[var(--apple-gray-900)] dark:text-white mb-2">
-          Hi there, {user.displayName ? user.displayName.split(' ')[0] : 'Friend'}!
-        </h2>
+        <h1 className="text-4xl font-bold text-[var(--apple-gray-900)] dark:text-white mb-2">
+          Hey {user.displayName?.split(' ')[0] || user.email?.split('@')[0] || 'there'}!
+        </h1>
         <p className="text-lg text-[var(--apple-gray-600)] dark:text-[var(--apple-gray-400)]">
-          Welcome to your 90 Day Run Tracker dashboard
+          Welcome to your 90 Day Run Tracker
         </p>
       </div>
 
@@ -601,7 +701,7 @@ export default function Dashboard() {
             </div>
           </form>
         ) : (
-          <div className="mt-4 p-6 bg-[#39e991]/10 dark:bg-[#39e991]/5 rounded-lg border border-[#39e991]/20 dark:border-[#39e991]/10">
+          <div className="mt-4 p-6 bg-[var(--theme-color)]/10 dark:bg-[var(--theme-color)]/5 rounded-lg border border-[var(--theme-color)]/20 dark:border-[var(--theme-color)]/10">
             {userGoal ? (
               <p className="text-3xl font-bold text-center text-[var(--apple-gray-900)] dark:text-white py-6">
                 {userGoal}
@@ -648,7 +748,7 @@ export default function Dashboard() {
         {/* Completion Rate */}
         <div className="apple-card p-6">
           <div className="flex items-center mb-2">
-            <TrendingUp className="text-[#39e991] h-6 w-6 mr-2" />
+            <TrendingUp className="text-[var(--theme-color)] h-6 w-6 mr-2" />
             <h2 className="text-[var(--apple-gray-600)] dark:text-[var(--apple-gray-400)] font-medium">Completion Rate</h2>
           </div>
           <div className="mt-2">
@@ -753,7 +853,7 @@ export default function Dashboard() {
 
         {loadingReports ? (
           <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#39e991] mx-auto"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[var(--theme-color)] mx-auto"></div>
             <p className="text-sm text-[var(--apple-gray-500)] dark:text-[var(--apple-gray-400)] mt-3">
               Loading reports...
             </p>
@@ -767,18 +867,11 @@ export default function Dashboard() {
                 className="border border-[var(--apple-gray-200)] dark:border-[var(--apple-gray-700)] rounded-lg p-4 hover:shadow-md transition-shadow"
               >
                 <div className="flex items-center mb-2">
-                  <div className={`w-2 h-2 rounded-full mr-2 ${
-                    report.pdca?.didPlannedHappen && report.pdca?.hadUrgency && report.pdca?.managedTime 
-                      ? 'bg-[#39e991]' 
-                      : 'bg-amber-400'
-                  }`}></div>
-                  <h3 className="text-sm font-medium text-[var(--apple-gray-900)] dark:text-white truncate">
-                    {report.dayNumber ? `Day ${report.dayNumber}` : 'Report'}
-                  </h3>
+                  <div className="w-2 h-2 rounded-full mr-2 bg-[#39e991]"></div>
+                  <p className="text-sm font-medium text-[var(--apple-gray-900)] dark:text-white">
+                    {report.dayNumber ? `Day ${report.dayNumber}: ` : ''}{report.bookTitle || 'Untitled Report'}
+                  </p>
                 </div>
-                <p className="text-xs text-[var(--apple-gray-500)] dark:text-[var(--apple-gray-400)]">
-                  {report.bookTitle || 'Untitled Book'}
-                </p>
                 <p className="text-xs text-[var(--apple-gray-500)] dark:text-[var(--apple-gray-400)] mt-2">
                   {new Date(report.createdAt).toLocaleDateString()}
                 </p>
@@ -786,46 +879,44 @@ export default function Dashboard() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12 text-[var(--apple-gray-500)] dark:text-[var(--apple-gray-400)]">
-            <p className="mb-4">No reports yet. Create your first report!</p>
-            <Link
-              href="/reports/new"
-              className="apple-button-green inline-flex items-center"
-            >
-              Create Report
-            </Link>
-          </div>
+          <p className="text-center text-[var(--apple-gray-600)] dark:text-[var(--apple-gray-400)] py-6">
+            No reports found.
+          </p>
         )}
       </div>
 
-      {/* Calendar Day Modal */}
+      {/* Calendar day modal */}
       {showCalendarModal && selectedDay && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-[var(--apple-gray-800)] p-6 rounded-lg max-w-sm w-full mx-4">
-            <h3 className="text-xl font-bold text-[var(--apple-gray-900)] dark:text-white mb-3">
-              {modalAction === 'mark' ? 'Mark Day as Complete' : 'Unmark Day'}
+          <div className="bg-white dark:bg-[var(--apple-gray-800)] rounded-lg p-6 max-w-sm w-full">
+            <h3 className="text-lg font-bold text-[var(--apple-gray-900)] dark:text-white mb-4">
+              {modalAction === 'mark' ? 'Mark day as complete?' : 'Remove completed status?'}
             </h3>
             <p className="text-[var(--apple-gray-600)] dark:text-[var(--apple-gray-400)] mb-6">
               {modalAction === 'mark' 
-                ? `Mark ${monthNames[currentDate.getMonth()]} ${selectedDay} as a day you completed reading?` 
-                : `Remove ${monthNames[currentDate.getMonth()]} ${selectedDay} from your completed days?`}
+                ? `This will mark ${monthNames[currentDate.getMonth()]} ${selectedDay} as a completed reading day.` 
+                : `This will remove ${monthNames[currentDate.getMonth()]} ${selectedDay} from your completed reading days.`
+              }
             </p>
-            <div className="flex flex-col-reverse sm:flex-row justify-end space-y-reverse space-y-2 sm:space-y-0 sm:space-x-3">
-              <button
-                onClick={() => setShowCalendarModal(false)}
-                className="px-4 py-2 border border-[var(--apple-gray-300)] dark:border-[var(--apple-gray-600)] rounded-lg text-[var(--apple-gray-700)] dark:text-[var(--apple-gray-300)]"
+            <div className="flex justify-end space-x-3">
+              <button 
+                onClick={() => {
+                  setShowCalendarModal(false);
+                  setSelectedDay(null);
+                }}
+                className="px-4 py-2 border border-[var(--apple-gray-300)] dark:border-[var(--apple-gray-600)] text-[var(--apple-gray-700)] dark:text-[var(--apple-gray-300)] rounded-md hover:bg-[var(--apple-gray-100)] dark:hover:bg-[var(--apple-gray-700)]"
               >
                 Cancel
               </button>
               <button
                 onClick={handleUpdateCalendarDay}
-                className={`px-4 py-2 rounded-lg ${
+                className={`px-4 py-2 rounded-md text-white ${
                   modalAction === 'mark' 
-                    ? 'bg-[#39e991] text-[var(--apple-gray-900)]' 
-                    : 'bg-red-400 text-white'
+                    ? 'bg-[#39e991] hover:brightness-95' 
+                    : 'bg-red-500 hover:bg-red-600'
                 }`}
               >
-                {modalAction === 'mark' ? 'Mark as Complete' : 'Remove Day'}
+                {modalAction === 'mark' ? 'Mark Complete' : 'Remove'}
               </button>
             </div>
           </div>
