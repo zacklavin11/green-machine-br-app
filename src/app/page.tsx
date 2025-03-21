@@ -35,6 +35,226 @@ export default function Dashboard() {
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [modalAction, setModalAction] = useState<'mark' | 'unmark'>('mark');
   
+  // Helper function to calculate how many days in a month
+  const getDaysInMonth = (year: number, month: number) => {
+    return new Date(year, month + 1, 0).getDate();
+  };
+
+  // Helper function to calculate streak
+  const calculateUserStreak = (reports: any[]): { currentStreak: number, longestStreak: number } => {
+    if (!reports || !reports.length) return { currentStreak: 0, longestStreak: 0 };
+    
+    console.log(`Starting streak calculation with ${reports.length} reports`);
+    
+    // Sort reports by date (newest first)
+    const sortedReports = [...reports].sort((a, b) => {
+      const dateA = a.createdAt instanceof Date 
+        ? a.createdAt 
+        : new Date(a.createdAt?.seconds ? a.createdAt.seconds * 1000 : Date.now());
+      
+      const dateB = b.createdAt instanceof Date 
+        ? b.createdAt 
+        : new Date(b.createdAt?.seconds ? b.createdAt.seconds * 1000 : Date.now());
+      
+      return dateB.getTime() - dateA.getTime();
+    });
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    let currentStreak = 0;
+    let longestStreak = 0;
+    let tempStreak = 0;
+    
+    // Group reports by date to handle multiple reports on the same day
+    const reportsByDate = new Map<string, any[]>();
+    sortedReports.forEach(report => {
+      // Make sure createdAt is a Date object
+      const reportDate = report.createdAt instanceof Date 
+        ? report.createdAt 
+        : new Date(report.createdAt?.seconds ? report.createdAt.seconds * 1000 : Date.now());
+      
+      // Set to start of day for consistent comparison
+      const date = new Date(reportDate);
+      date.setHours(0, 0, 0, 0);
+      const dateStr = date.toISOString().split('T')[0];
+      
+      if (!reportsByDate.has(dateStr)) {
+        reportsByDate.set(dateStr, []);
+      }
+      reportsByDate.get(dateStr)!.push(report);
+    });
+    
+    // Get all unique dates with reports, sorted descending
+    const reportDates = Array.from(reportsByDate.keys())
+      .map(dateStr => new Date(dateStr))
+      .sort((a, b) => b.getTime() - a.getTime());
+    
+    console.log(`Report dates:`, reportDates.map(d => d.toISOString().split('T')[0]));
+    
+    // For calendar view, handle streak calculation differently
+    // We need to check if the sorted days form a consecutive streak
+    
+    // Get all day numbers in descending order (for current month view)
+    const days = sortedReports.map(report => {
+      const date = report.createdAt instanceof Date 
+        ? report.createdAt 
+        : new Date(report.createdAt?.seconds ? report.createdAt.seconds * 1000 : Date.now());
+      return date.getDate();
+    }).sort((a, b) => b - a); // Sort in descending order
+    
+    console.log("Calendar days in descending order:", days);
+    
+    // For calendar view, check if today's date or yesterday's date is included
+    const todayDate = today.getDate();
+    const yesterdayDate = new Date(today);
+    yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+    const yesterdayDay = yesterdayDate.getDate();
+    
+    const isCurrentMonth = currentDate.getMonth() === today.getMonth() && 
+                           currentDate.getFullYear() === today.getFullYear();
+    
+    console.log(`Is current month: ${isCurrentMonth}`, {
+      currentDateMonth: currentDate.getMonth(),
+      todayMonth: today.getMonth(),
+      currentDateYear: currentDate.getFullYear(),
+      todayYear: today.getFullYear(),
+      todayDate,
+      yesterdayDay
+    });
+    
+    // Check if the most recent day is today or yesterday
+    // For calendar view (using days of month)
+    if (isCurrentMonth) {
+      // If viewing current month, check if we have today or yesterday
+      const hasTodayOrYesterday = days.includes(todayDate) || days.includes(yesterdayDay);
+      
+      if (days.length > 0 && hasTodayOrYesterday) {
+        // Start with a streak of 1 for the most recent day
+        currentStreak = 1;
+        
+        // Sort days in descending order for the current month
+        const sortedDays = Array.from(new Set(days)).sort((a, b) => b - a);
+        console.log("Sorted unique days:", sortedDays);
+        
+        if (sortedDays.length > 1) {
+          // Start from second day (index 1) since we already counted the first day
+          let expectedDay = sortedDays[0] - 1;
+          
+          for (let i = 1; i < sortedDays.length; i++) {
+            const currentDay = sortedDays[i];
+            console.log(`Checking streak: expectedDay=${expectedDay}, currentDay=${currentDay}`);
+            
+            if (currentDay === expectedDay) {
+              // This is a consecutive day
+              currentStreak++;
+              expectedDay--;
+              console.log(`Consecutive day found, streak now: ${currentStreak}`);
+            } else {
+              // Break in streak
+              console.log(`Break in streak found: expected ${expectedDay}, found ${currentDay}`);
+              break;
+            }
+          }
+        }
+      }
+    } else {
+      // Historical data uses the original method with date objects
+      const mostRecentReportDate = reportDates[0];
+      if (mostRecentReportDate) {
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        
+        console.log(`Today: ${today.toISOString().split('T')[0]}`);
+        console.log(`Yesterday: ${yesterday.toISOString().split('T')[0]}`);
+        console.log(`Most recent report: ${mostRecentReportDate.toISOString().split('T')[0]}`);
+        
+        const isToday = mostRecentReportDate.getTime() === today.getTime();
+        const isYesterday = mostRecentReportDate.getTime() === yesterday.getTime();
+        
+        console.log(`Historical data check - isToday: ${isToday}, isYesterday: ${isYesterday}`);
+        
+        if (isToday || isYesterday) {
+          currentStreak = 1; // Start with 1 for the most recent day
+          
+          for (let i = 1; i < reportDates.length; i++) {
+            const currentDate = reportDates[i-1];
+            const prevDate = reportDates[i];
+            
+            // Calculate days between reports
+            const diffTime = currentDate.getTime() - prevDate.getTime();
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            
+            console.log(`Historical streak check: diffDays=${diffDays}`);
+            
+            if (diffDays === 1) {
+              // Consecutive day, continue streak
+              currentStreak++;
+              console.log(`Historical consecutive day found, streak now: ${currentStreak}`);
+            } else {
+              // Break in streak
+              console.log(`Historical break in streak found: diffDays=${diffDays}`);
+              break;
+            }
+          }
+        }
+      }
+    }
+    
+    // Calculate longest streak (similar logic as current streak)
+    if (isCurrentMonth && days.length > 0) {
+      // For current month view
+      const sortedDays = Array.from(new Set(days)).sort((a, b) => b - a);
+      
+      if (sortedDays.length > 0) {
+        tempStreak = 1;
+        let expectedDay = sortedDays[0] - 1;
+        
+        for (let i = 1; i < sortedDays.length; i++) {
+          const currentDay = sortedDays[i];
+          
+          if (currentDay === expectedDay) {
+            // This is a consecutive day
+            tempStreak++;
+            expectedDay--;
+          } else {
+            // Break in streak
+            longestStreak = Math.max(longestStreak, tempStreak);
+            tempStreak = 1;
+            expectedDay = currentDay - 1;
+          }
+        }
+      }
+    } else if (reportDates.length > 0) {
+      // Historical data uses the original method
+      tempStreak = 1;
+      
+      for (let i = 1; i < reportDates.length; i++) {
+        const prevDateObj = reportDates[i-1];
+        const currentDateObj = reportDates[i];
+        
+        // Calculate days between reports
+        const diffTime = prevDateObj.getTime() - currentDateObj.getTime();
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 1) {
+          // Consecutive day
+          tempStreak++;
+        } else {
+          // Break in streak, update longest and reset temp
+          longestStreak = Math.max(longestStreak, tempStreak);
+          tempStreak = 1;
+        }
+      }
+    }
+    
+    // Final check for longest streak
+    longestStreak = Math.max(longestStreak, tempStreak);
+    console.log(`Calculated streak: current=${currentStreak}, longest=${longestStreak}`);
+    
+    return { currentStreak, longestStreak };
+  };
+  
   // Load user data from Firebase
   useEffect(() => {
     async function loadUserData() {
@@ -268,226 +488,6 @@ export default function Dashboard() {
       loadUserData();
     }
   }, [user, authLoading, currentDate]);
-
-  // Helper function to calculate streak
-  const calculateUserStreak = (reports: any[]): { currentStreak: number, longestStreak: number } => {
-    if (!reports || !reports.length) return { currentStreak: 0, longestStreak: 0 };
-    
-    console.log(`Starting streak calculation with ${reports.length} reports`);
-    
-    // Sort reports by date (newest first)
-    const sortedReports = [...reports].sort((a, b) => {
-      const dateA = a.createdAt instanceof Date 
-        ? a.createdAt 
-        : new Date(a.createdAt?.seconds ? a.createdAt.seconds * 1000 : Date.now());
-      
-      const dateB = b.createdAt instanceof Date 
-        ? b.createdAt 
-        : new Date(b.createdAt?.seconds ? b.createdAt.seconds * 1000 : Date.now());
-      
-      return dateB.getTime() - dateA.getTime();
-    });
-    
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    let currentStreak = 0;
-    let longestStreak = 0;
-    let tempStreak = 0;
-    
-    // Group reports by date to handle multiple reports on the same day
-    const reportsByDate = new Map<string, any[]>();
-    sortedReports.forEach(report => {
-      // Make sure createdAt is a Date object
-      const reportDate = report.createdAt instanceof Date 
-        ? report.createdAt 
-        : new Date(report.createdAt?.seconds ? report.createdAt.seconds * 1000 : Date.now());
-      
-      // Set to start of day for consistent comparison
-      const date = new Date(reportDate);
-      date.setHours(0, 0, 0, 0);
-      const dateStr = date.toISOString().split('T')[0];
-      
-      if (!reportsByDate.has(dateStr)) {
-        reportsByDate.set(dateStr, []);
-      }
-      reportsByDate.get(dateStr)!.push(report);
-    });
-    
-    // Get all unique dates with reports, sorted descending
-    const reportDates = Array.from(reportsByDate.keys())
-      .map(dateStr => new Date(dateStr))
-      .sort((a, b) => b.getTime() - a.getTime());
-    
-    console.log(`Report dates:`, reportDates.map(d => d.toISOString().split('T')[0]));
-    
-    // For calendar view, handle streak calculation differently
-    // We need to check if the sorted days form a consecutive streak
-    
-    // Get all day numbers in descending order (for current month view)
-    const days = sortedReports.map(report => {
-      const date = report.createdAt instanceof Date 
-        ? report.createdAt 
-        : new Date(report.createdAt?.seconds ? report.createdAt.seconds * 1000 : Date.now());
-      return date.getDate();
-    }).sort((a, b) => b - a); // Sort in descending order
-    
-    console.log("Calendar days in descending order:", days);
-    
-    // For calendar view, check if today's date or yesterday's date is included
-    const todayDate = today.getDate();
-    const yesterdayDate = new Date(today);
-    yesterdayDate.setDate(yesterdayDate.getDate() - 1);
-    const yesterdayDay = yesterdayDate.getDate();
-    
-    const isCurrentMonth = currentDate.getMonth() === today.getMonth() && 
-                           currentDate.getFullYear() === today.getFullYear();
-    
-    console.log(`Is current month: ${isCurrentMonth}`, {
-      currentDateMonth: currentDate.getMonth(),
-      todayMonth: today.getMonth(),
-      currentDateYear: currentDate.getFullYear(),
-      todayYear: today.getFullYear(),
-      todayDate,
-      yesterdayDay
-    });
-    
-    // Check if the most recent day is today or yesterday
-    // For calendar view (using days of month)
-    if (isCurrentMonth) {
-      // If viewing current month, check if we have today or yesterday
-      const hasTodayOrYesterday = days.includes(todayDate) || days.includes(yesterdayDay);
-      
-      if (days.length > 0 && hasTodayOrYesterday) {
-        // Start with a streak of 1 for the most recent day
-        currentStreak = 1;
-        
-        // Sort days in descending order for the current month
-        const sortedDays = Array.from(new Set(days)).sort((a, b) => b - a);
-        console.log("Sorted unique days:", sortedDays);
-        
-        if (sortedDays.length > 1) {
-          // Start from second day (index 1) since we already counted the first day
-          let expectedDay = sortedDays[0] - 1;
-          
-          for (let i = 1; i < sortedDays.length; i++) {
-            const currentDay = sortedDays[i];
-            console.log(`Checking streak: expectedDay=${expectedDay}, currentDay=${currentDay}`);
-            
-            if (currentDay === expectedDay) {
-              // This is a consecutive day
-              currentStreak++;
-              expectedDay--;
-              console.log(`Consecutive day found, streak now: ${currentStreak}`);
-            } else {
-              // Break in streak
-              console.log(`Break in streak found: expected ${expectedDay}, found ${currentDay}`);
-              break;
-            }
-          }
-        }
-      }
-    } else {
-      // Historical data uses the original method with date objects
-      const mostRecentReportDate = reportDates[0];
-      if (mostRecentReportDate) {
-        const yesterday = new Date(today);
-        yesterday.setDate(yesterday.getDate() - 1);
-        
-        console.log(`Today: ${today.toISOString().split('T')[0]}`);
-        console.log(`Yesterday: ${yesterday.toISOString().split('T')[0]}`);
-        console.log(`Most recent report: ${mostRecentReportDate.toISOString().split('T')[0]}`);
-        
-        const isToday = mostRecentReportDate.getTime() === today.getTime();
-        const isYesterday = mostRecentReportDate.getTime() === yesterday.getTime();
-        
-        console.log(`Historical data check - isToday: ${isToday}, isYesterday: ${isYesterday}`);
-        
-        if (isToday || isYesterday) {
-          currentStreak = 1; // Start with 1 for the most recent day
-          
-          for (let i = 1; i < reportDates.length; i++) {
-            const currentDate = reportDates[i-1];
-            const prevDate = reportDates[i];
-            
-            // Calculate days between reports
-            const diffTime = currentDate.getTime() - prevDate.getTime();
-            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-            
-            console.log(`Historical streak check: diffDays=${diffDays}`);
-            
-            if (diffDays === 1) {
-              // Consecutive day, continue streak
-              currentStreak++;
-              console.log(`Historical consecutive day found, streak now: ${currentStreak}`);
-            } else {
-              // Break in streak
-              console.log(`Historical break in streak found: diffDays=${diffDays}`);
-              break;
-            }
-          }
-        }
-      }
-    }
-    
-    // Calculate longest streak (similar logic as current streak)
-    if (isCurrentMonth && days.length > 0) {
-      // For current month view
-      const sortedDays = Array.from(new Set(days)).sort((a, b) => b - a);
-      
-      if (sortedDays.length > 0) {
-        tempStreak = 1;
-        let expectedDay = sortedDays[0] - 1;
-        
-        for (let i = 1; i < sortedDays.length; i++) {
-          const currentDay = sortedDays[i];
-          
-          if (currentDay === expectedDay) {
-            // This is a consecutive day
-            tempStreak++;
-            expectedDay--;
-          } else {
-            // Break in streak
-            longestStreak = Math.max(longestStreak, tempStreak);
-            tempStreak = 1;
-            expectedDay = currentDay - 1;
-          }
-        }
-      }
-    } else if (reportDates.length > 0) {
-      // Historical data uses the original method
-      tempStreak = 1;
-      
-      for (let i = 1; i < reportDates.length; i++) {
-        const prevDateObj = reportDates[i-1];
-        const currentDateObj = reportDates[i];
-        
-        // Calculate days between reports
-        const diffTime = prevDateObj.getTime() - currentDateObj.getTime();
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-        
-        if (diffDays === 1) {
-          // Consecutive day
-          tempStreak++;
-        } else {
-          // Break in streak, update longest and reset temp
-          longestStreak = Math.max(longestStreak, tempStreak);
-          tempStreak = 1;
-        }
-      }
-    }
-    
-    // Final check for longest streak
-    longestStreak = Math.max(longestStreak, tempStreak);
-    console.log(`Calculated streak: current=${currentStreak}, longest=${longestStreak}`);
-    
-    return { currentStreak, longestStreak };
-  };
-
-  // Get current month days
-  const getDaysInMonth = (year: number, month: number) => {
-    return new Date(year, month + 1, 0).getDate();
-  };
 
   // Get day of week for the first day of the month (0 = Sunday, 6 = Saturday)
   const getFirstDayOfMonth = (year: number, month: number) => {

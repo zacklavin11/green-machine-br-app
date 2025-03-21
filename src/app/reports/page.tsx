@@ -126,7 +126,7 @@ export default function ReportsPage() {
       isMounted = false;
       clearTimeout(loadTimeout);
     };
-  }, [user, loading, retryCount]);
+  }, [user, loading, retryCount, connectionAttempts]);
 
   // Function to manually retry loading reports
   const handleRetry = () => {

@@ -123,6 +123,18 @@ export default function NewReportPage() {
 
   // Fetch the last report when component mounts
   useEffect(() => {
+    // Demo data function moved outside of fetchPreviousReport
+    const getDemoData = () => {
+      console.log("Using demo data to populate form");
+      return {
+        id: "demo-report-id",
+        bookTitle: "Atomic Habits",
+        dayNumber: "3",
+        pages: "25-42",
+        createdAt: new Date()
+      };
+    };
+    
     const fetchPreviousReport = async () => {
       if (!user) {
         console.log("No user found, can't fetch previous report");
@@ -134,19 +146,6 @@ export default function NewReportPage() {
       setIsLoading(true);
       
       try {
-        // Add demo data handler - this will provide example data when Firestore fails
-        const useDemoData = () => {
-          console.log("Using demo data to populate form");
-          const demoReport = {
-            id: "demo-report-id",
-            bookTitle: "Atomic Habits",
-            dayNumber: "3",
-            pages: "25-42",
-            createdAt: new Date()
-          };
-          processAndPopulateReport(demoReport);
-        };
-        
         // First try to get from localStorage as a fallback
         const cachedReportStr = localStorage.getItem('latestReport');
         let cachedReport = null;
@@ -181,7 +180,8 @@ export default function NewReportPage() {
               processAndPopulateReport(cachedReport);
             } else {
               // Use demo data as last resort
-              useDemoData();
+              const demoReport = getDemoData();
+              processAndPopulateReport(demoReport);
             }
           }
         } catch (firestoreError) {
@@ -193,20 +193,15 @@ export default function NewReportPage() {
             processAndPopulateReport(cachedReport);
           } else {
             // Use demo data as last resort
-            useDemoData();
+            const demoReport = getDemoData();
+            processAndPopulateReport(demoReport);
           }
         }
       } catch (error) {
         console.error("Error fetching previous report:", error);
         
         // Use demo data for development
-        const demoReport = {
-          id: "demo-report-id",
-          bookTitle: "Atomic Habits",
-          dayNumber: "3", 
-          pages: "25-42",
-          createdAt: new Date()
-        };
+        const demoReport = getDemoData();
         processAndPopulateReport(demoReport);
       }
     };
