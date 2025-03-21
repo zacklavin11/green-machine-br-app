@@ -28,7 +28,7 @@ export default function Navbar() {
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
               <Link href="/" className="text-xl font-bold text-[#39e991] flex items-center">
-                <Footprints className="h-6 w-6 mr-2" />
+                <Footprints className="h-8 w-8 mr-2 text-[#39e991]" />
                 <span>90 Day Run Tracker</span>
               </Link>
             </div>
@@ -87,9 +87,15 @@ export default function Navbar() {
                   <span className="sr-only">Open user menu</span>
                   <div className="h-8 w-8 rounded-full bg-[#39e991] flex items-center justify-center text-[var(--apple-gray-900)]">
                     {user.photoURL ? (
-                      <img src={user.photoURL} alt="User" className="h-8 w-8 rounded-full" />
+                      <img
+                        className="h-8 w-8 rounded-full border-2 border-[#39e991] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#39e991] rounded-full"
+                        src={user.photoURL}
+                        alt={user.displayName || 'Profile'}
+                      />
                     ) : (
-                      <User className="h-5 w-5" />
+                      <div className="h-8 w-8 rounded-full bg-[#39e991] flex items-center justify-center text-[var(--apple-gray-900)]">
+                        {user.displayName ? user.displayName.charAt(0) : 'U'}
+                      </div>
                     )}
                   </div>
                 </button>
@@ -138,9 +144,9 @@ export default function Navbar() {
             {/* Mobile menu button */}
             <div className="flex items-center sm:hidden ml-4">
               <button
+                type="button"
+                className="inline-flex items-center justify-center p-2 rounded-md text-[var(--apple-gray-400)] hover:text-[var(--apple-gray-500)] hover:bg-[var(--apple-gray-100)] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#39e991]"
                 onClick={toggleMenu}
-                className="inline-flex items-center justify-center p-2 rounded-md text-[var(--apple-gray-500)] hover:text-[var(--apple-gray-900)] hover:bg-[var(--apple-gray-50)] dark:text-[var(--apple-gray-400)] dark:hover:text-white dark:hover:bg-[var(--apple-gray-700)] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#39e991]"
-                aria-expanded="false"
               >
                 <span className="sr-only">Open main menu</span>
                 {menuOpen ? <X className="block h-6 w-6" /> : <Menu className="block h-6 w-6" />}

@@ -265,7 +265,7 @@ export default function ReportPage({ params }: { params: { id: string } }) {
       captureMessage.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50';
       captureMessage.innerHTML = `
         <div class="bg-white dark:bg-[var(--apple-gray-800)] p-6 rounded-lg text-center">
-          <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-[#39e991] mx-auto mb-4"></div>
+          <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-[var(--reports-theme-color)] mx-auto mb-4"></div>
           <p class="text-[var(--apple-gray-900)] dark:text-white font-medium">Capturing report as image...</p>
         </div>
       `;
@@ -319,7 +319,7 @@ export default function ReportPage({ params }: { params: { id: string } }) {
       modalElement.innerHTML = `
         <div class="bg-white dark:bg-[var(--apple-gray-800)] p-6 rounded-lg text-center max-w-md w-full mx-4">
           <div class="mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#39e991] mx-auto">
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[var(--reports-theme-color)] mx-auto">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
               <polyline points="7 10 12 15 17 10"></polyline>
               <line x1="12" y1="15" x2="12" y2="3"></line>
@@ -440,7 +440,7 @@ export default function ReportPage({ params }: { params: { id: string } }) {
       <div className="p-8 text-center">
         <div className="apple-card p-12">
           <div className="flex flex-col items-center justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#39e991] mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[var(--reports-theme-color)] mb-4"></div>
             <h2 className="text-xl font-bold text-[var(--apple-gray-900)] dark:text-white mb-2">Loading report...</h2>
             <p className="text-[var(--apple-gray-600)] dark:text-[var(--apple-gray-400)]">
               This may take a moment. Please wait.
@@ -564,7 +564,7 @@ export default function ReportPage({ params }: { params: { id: string } }) {
       <div id="report-container" className="max-w-4xl mx-auto">
         {/* Report header with user info */}
         <div className="apple-card mb-6 overflow-hidden">
-          <div className={`w-full h-1.5 ${report.pdca?.didPlannedHappen && report.pdca?.hadUrgency && report.pdca?.managedTime ? 'bg-[#39e991]' : 'bg-amber-400'}`}></div>
+          <div className={`absolute inset-0 flex items-start justify-center rounded-t-md ${report.pdca?.didPlannedHappen && report.pdca?.hadUrgency && report.pdca?.managedTime ? 'bg-[var(--reports-theme-color)]' : 'bg-amber-400'}`}></div>
           <div className="relative px-8 py-6 border-b border-[var(--apple-gray-200)] dark:border-[var(--apple-gray-700)]">
             <div className="flex justify-between items-start">
               <div>
@@ -573,7 +573,7 @@ export default function ReportPage({ params }: { params: { id: string } }) {
                     {report.dayNumber ? `Day ${report.dayNumber}` : 'Report'}
                   </h1>
                   {report.pdca?.didPlannedHappen && report.pdca?.hadUrgency && report.pdca?.managedTime && (
-                    <div className="flex items-center justify-center bg-[#39e991] rounded-full h-6 w-6">
+                    <div className="flex items-center justify-center bg-[var(--reports-theme-color)] rounded-full h-6 w-6">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
@@ -734,7 +734,7 @@ export default function ReportPage({ params }: { params: { id: string } }) {
                   <div key={index} className="flex items-center">
                     <div 
                       onClick={() => handleToggleActionItem(index, !item.completed)}
-                      className={`flex-shrink-0 h-5 w-5 rounded-full mr-3 flex items-center justify-center cursor-pointer ${item.completed ? 'bg-[#39e991]' : 'border border-[var(--apple-gray-400)]'}`}
+                      className={`flex-shrink-0 h-5 w-5 rounded-full mr-3 flex items-center justify-center cursor-pointer ${item.completed ? 'bg-[var(--reports-theme-color)]' : 'border border-[var(--apple-gray-400)]'}`}
                     >
                       {item.completed && (
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-white" viewBox="0 0 20 20" fill="currentColor">

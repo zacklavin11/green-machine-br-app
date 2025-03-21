@@ -76,12 +76,47 @@ export default function Dashboard() {
         try {
           const activeDays = await getActiveCalendarDays(user.uid);
           setActiveCalendarDays(activeDays);
+          
+          // Calculate streaks based on active calendar days
+          if (activeDays && activeDays.length > 0) {
+            // Convert active days to report-like objects for streak calculation
+            const simulatedReports = activeDays.map(day => {
+              // Create a date for this day in the current month/year
+              const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+              return {
+                createdAt: date,
+                date: date.toISOString().split('T')[0]
+              };
+            });
+            
+            // Calculate streak based on these simulated reports
+            const streak = calculateUserStreak(simulatedReports);
+            
+            // Update user stats if needed
+            if (userProfile && 
+                (userProfile.streakData?.currentStreak !== streak.currentStreak || 
+                 userProfile.streakData?.longestStreak !== streak.longestStreak)) {
+              
+              await updateUserStreak(user.uid, {
+                ...userProfile.streakData,
+                currentStreak: streak.currentStreak,
+                longestStreak: Math.max(streak.longestStreak, userProfile.streakData?.longestStreak || 0),
+                activeCalendarDays: activeDays
+              });
+              
+              setUserStats(prev => ({
+                ...prev,
+                currentStreak: streak.currentStreak,
+                longestStreak: Math.max(streak.longestStreak, userProfile.streakData?.longestStreak || 0),
+              }));
+            }
+          }
         } catch (err) {
           console.error("Error loading active days:", err);
           setActiveCalendarDays([]);
         }
         
-        // Set user stats from profile
+        // Set user stats from profile (as fallback and to preserve other stats)
         if (userProfile && userProfile.streakData) {
           setUserStats({
             currentStreak: userProfile.streakData.currentStreak || 0,
@@ -114,7 +149,7 @@ export default function Dashboard() {
             const recentOnes = userReports.slice(0, 3); // Only show 3 most recent reports
             setRecentReports(recentOnes);
             
-            // Update active calendar days based on reports
+            // Collect report days for the current month (for missed days calculation only)
             const reportDays = new Set<number>();
             const missedDaysList: number[] = [];
             
@@ -127,13 +162,13 @@ export default function Dashboard() {
               }
             });
             
-            // Calculate missed days (days before today without reports)
+            // Calculate missed days (days before today without reports OR active calendar days)
             const today = new Date();
             if (today.getMonth() === currentDate.getMonth() && 
                 today.getFullYear() === currentDate.getFullYear()) {
               const todayDate = today.getDate();
               for (let i = 1; i < todayDate; i++) {
-                if (!reportDays.has(i)) {
+                if (!reportDays.has(i) && !activeCalendarDays.includes(i)) {
                   missedDaysList.push(i);
                 }
               }
@@ -141,45 +176,16 @@ export default function Dashboard() {
               (today.getFullYear() > currentDate.getFullYear()) || 
               (today.getFullYear() === currentDate.getFullYear() && today.getMonth() > currentDate.getMonth())
             ) {
-              // If viewing a past month, all days without reports are missed
+              // If viewing a past month, days without reports or calendar marks are missed
               for (let i = 1; i <= daysInMonth; i++) {
-                if (!reportDays.has(i)) {
+                if (!reportDays.has(i) && !activeCalendarDays.includes(i)) {
                   missedDaysList.push(i);
                 }
               }
             }
             
-            setActiveCalendarDays(Array.from(reportDays));
+            // Important: DON'T overwrite activeCalendarDays here to preserve user's manual calendar marks
             setMissedDays(missedDaysList);
-            
-            // Update streak in Firebase only if we have reports and viewing current month
-            if (userReports.length > 0 && 
-                today.getMonth() === currentDate.getMonth() && 
-                today.getFullYear() === currentDate.getFullYear()) {
-              
-              const streak = calculateUserStreak(userReports);
-              if (userProfile && 
-                  (userProfile.streakData?.currentStreak !== streak.currentStreak || 
-                   userProfile.streakData?.longestStreak !== streak.longestStreak)) {
-                
-                // Update streak in Firebase
-                await updateUserStreak(user.uid, {
-                  ...userProfile.streakData,
-                  currentStreak: streak.currentStreak,
-                  longestStreak: Math.max(streak.longestStreak, userProfile.streakData?.longestStreak || 0),
-                  totalReports: userReports.length,
-                  activeCalendarDays: Array.from(reportDays)
-                });
-                
-                // Update local state
-                setUserStats(prev => ({
-                  ...prev,
-                  currentStreak: streak.currentStreak,
-                  longestStreak: Math.max(streak.longestStreak, userProfile.streakData?.longestStreak || 0),
-                  totalReports: userReports.length
-                }));
-              }
-            }
           }
         } catch (err) {
           console.error("Error loading recent reports:", err);
@@ -200,12 +206,20 @@ export default function Dashboard() {
 
   // Helper function to calculate streak
   const calculateUserStreak = (reports: any[]): { currentStreak: number, longestStreak: number } => {
-    if (!reports.length) return { currentStreak: 0, longestStreak: 0 };
+    if (!reports || !reports.length) return { currentStreak: 0, longestStreak: 0 };
     
     // Sort reports by date (newest first)
-    const sortedReports = [...reports].sort((a, b) => 
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    const sortedReports = [...reports].sort((a, b) => {
+      const dateA = a.createdAt instanceof Date 
+        ? a.createdAt 
+        : new Date(a.createdAt?.seconds ? a.createdAt.seconds * 1000 : Date.now());
+      
+      const dateB = b.createdAt instanceof Date 
+        ? b.createdAt 
+        : new Date(b.createdAt?.seconds ? b.createdAt.seconds * 1000 : Date.now());
+      
+      return dateB.getTime() - dateA.getTime();
+    });
     
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -214,10 +228,16 @@ export default function Dashboard() {
     let longestStreak = 0;
     let tempStreak = 0;
     
-    // Group reports by date
+    // Group reports by date to handle multiple reports on the same day
     const reportsByDate = new Map<string, any[]>();
     sortedReports.forEach(report => {
-      const date = new Date(report.createdAt);
+      // Make sure createdAt is a Date object
+      const reportDate = report.createdAt instanceof Date 
+        ? report.createdAt 
+        : new Date(report.createdAt?.seconds ? report.createdAt.seconds * 1000 : Date.now());
+      
+      // Set to start of day for consistent comparison
+      const date = new Date(reportDate);
       date.setHours(0, 0, 0, 0);
       const dateStr = date.toISOString().split('T')[0];
       
@@ -238,56 +258,109 @@ export default function Dashboard() {
       const yesterday = new Date(today);
       yesterday.setDate(yesterday.getDate() - 1);
       
-      const isToday = mostRecentReportDate.getTime() === today.getTime();
-      const isYesterday = mostRecentReportDate.getTime() === yesterday.getTime();
+      // For calendar days in the current month, we need to adjust date comparison
+      // to account for the fact that our simulated reports use the current month
+      const isCurrentMonth = currentDate.getMonth() === today.getMonth() && 
+                            currentDate.getFullYear() === today.getFullYear();
       
-      if (isToday || isYesterday) {
-        currentStreak = 1; // Start with 1 for the most recent day
+      // Handle streak calculation differently for the current month vs. historical data
+      if (isCurrentMonth) {
+        const isToday = mostRecentReportDate.getDate() === today.getDate();
+        const isYesterday = mostRecentReportDate.getDate() === today.getDate() - 1;
         
-        for (let i = 1; i < reportDates.length; i++) {
-          const currentDate = reportDates[i-1];
-          const prevDate = reportDates[i];
+        if (isToday || isYesterday) {
+          currentStreak = 1; // Start with 1 for the most recent day
           
-          // Calculate days between reports
-          const diffTime = currentDate.getTime() - prevDate.getTime();
-          const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+          // For consecutive days, we just need to check if the date is one less
+          let prevDay = mostRecentReportDate.getDate();
           
-          if (diffDays === 1) {
-            // Consecutive day, continue streak
-            currentStreak++;
-          } else {
-            // Break in streak
-            break;
+          for (let i = 1; i < reportDates.length; i++) {
+            const currentDayInStreak = reportDates[i].getDate();
+            
+            if (prevDay - currentDayInStreak === 1) {
+              // Consecutive day, continue streak
+              currentStreak++;
+              prevDay = currentDayInStreak;
+            } else {
+              // Break in streak
+              break;
+            }
+          }
+        }
+      } else {
+        // For historical data, use the original comparison method
+        const isToday = mostRecentReportDate.getTime() === today.getTime();
+        const isYesterday = mostRecentReportDate.getTime() === yesterday.getTime();
+        
+        if (isToday || isYesterday) {
+          currentStreak = 1; // Start with 1 for the most recent day
+          
+          for (let i = 1; i < reportDates.length; i++) {
+            const currentDate = reportDates[i-1];
+            const prevDate = reportDates[i];
+            
+            // Calculate days between reports
+            const diffTime = currentDate.getTime() - prevDate.getTime();
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays === 1) {
+              // Consecutive day, continue streak
+              currentStreak++;
+            } else {
+              // Break in streak
+              break;
+            }
           }
         }
       }
     }
     
-    // Calculate longest streak
-    for (let i = 0; i < reportDates.length; i++) {
-      if (i === 0) {
-        tempStreak = 1;
-      } else {
-        const currentDate = reportDates[i-1];
-        const nextDate = reportDates[i];
+    // Calculate longest streak (similar logic as above, but for all reports)
+    if (reportDates.length > 0) {
+      tempStreak = 1;
+      let prevDay = reportDates[0].getDate();
+      
+      for (let i = 1; i < reportDates.length; i++) {
+        const currentDay = reportDates[i].getDate();
         
-        // Calculate days between reports
-        const diffTime = currentDate.getTime() - nextDate.getTime();
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-        
-        if (diffDays === 1) {
-          // Consecutive day
-          tempStreak++;
+        // If this is the current month, we can simplify to checking sequential days
+        if (currentDate.getMonth() === reportDates[i].getMonth() && 
+            currentDate.getFullYear() === reportDates[i].getFullYear()) {
+          
+          if (prevDay - currentDay === 1) {
+            // Consecutive day
+            tempStreak++;
+          } else {
+            // Break in streak, update longest and reset temp
+            longestStreak = Math.max(longestStreak, tempStreak);
+            tempStreak = 1;
+          }
+          
+          prevDay = currentDay;
         } else {
-          // Break in streak, update longest and reset temp
-          longestStreak = Math.max(longestStreak, tempStreak);
-          tempStreak = 1;
+          // Standard comparison for historical data
+          const prevDateObj = reportDates[i-1];
+          const currentDateObj = reportDates[i];
+          
+          // Calculate days between reports
+          const diffTime = prevDateObj.getTime() - currentDateObj.getTime();
+          const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+          
+          if (diffDays === 1) {
+            // Consecutive day
+            tempStreak++;
+          } else {
+            // Break in streak, update longest and reset temp
+            longestStreak = Math.max(longestStreak, tempStreak);
+            tempStreak = 1;
+          }
         }
       }
     }
     
     // Final check for longest streak
     longestStreak = Math.max(longestStreak, tempStreak);
+    console.log(`Calculated streak: current=${currentStreak}, longest=${longestStreak}`);
     
     return { currentStreak, longestStreak };
   };
@@ -373,6 +446,7 @@ export default function Dashboard() {
         // Add day to active days
         if (!updatedActiveDays.includes(selectedDay)) {
           updatedActiveDays.push(selectedDay);
+          updatedActiveDays.sort((a, b) => a - b); // Keep days sorted
         }
         // Remove from missed days if present
         updatedMissedDays = updatedMissedDays.filter(day => day !== selectedDay);
@@ -385,50 +459,52 @@ export default function Dashboard() {
         if (currentViewingDate < today) {
           if (!updatedMissedDays.includes(selectedDay)) {
             updatedMissedDays.push(selectedDay);
+            updatedMissedDays.sort((a, b) => a - b); // Keep days sorted
           }
         }
       }
       
-      // Update streak data in Firebase
-      await updateUserStreak(user.uid, {
-        ...userProfile.streakData,
-        activeCalendarDays: updatedActiveDays
-      });
-      
-      // Update local state
+      // Update local state first
       setActiveCalendarDays(updatedActiveDays);
       setMissedDays(updatedMissedDays);
       
-      // Recalculate streak
-      const allReports = await getDocuments("reports");
-      if (Array.isArray(allReports)) {
-        const userReports = allReports
-          .filter((report: any) => report.userId === user.uid)
-          .map((report: any) => ({
-            ...report,
-            createdAt: report.createdAt instanceof Date 
-              ? report.createdAt 
-              : new Date(report.createdAt?.seconds ? report.createdAt.seconds * 1000 : Date.now())
-          }));
-          
-        const streak = calculateUserStreak(userReports);
-        
-        // Update streak in Firebase
-        await updateUserStreak(user.uid, {
-          ...userProfile.streakData,
-          currentStreak: streak.currentStreak,
-          longestStreak: Math.max(streak.longestStreak, userProfile.streakData?.longestStreak || 0),
-          totalReports: userReports.length,
-          activeCalendarDays: updatedActiveDays
-        });
-        
-        // Update local state
-        setUserStats(prev => ({
-          ...prev,
-          currentStreak: streak.currentStreak,
-          longestStreak: Math.max(streak.longestStreak, userProfile.streakData?.longestStreak || 0),
-        }));
-      }
+      // Now recalculate streak based on the active calendar days
+      // Convert active days to report-like objects for streak calculation
+      const simulatedReports = updatedActiveDays.map(day => {
+        // Create a date for this day in the current month/year
+        const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+        return {
+          createdAt: date,
+          date: date.toISOString().split('T')[0]
+        };
+      });
+      
+      // Calculate streak based on these simulated reports
+      const streak = calculateUserStreak(simulatedReports);
+      
+      // Update streak in Firebase with the new values
+      const updatedStreakData = {
+        ...userProfile.streakData,
+        currentStreak: streak.currentStreak,
+        longestStreak: Math.max(streak.longestStreak, userProfile.streakData?.longestStreak || 0),
+        activeCalendarDays: updatedActiveDays
+      };
+      
+      await updateUserStreak(user.uid, updatedStreakData);
+      
+      // Update local state with new streak values
+      setUserStats(prev => ({
+        ...prev,
+        currentStreak: streak.currentStreak,
+        longestStreak: Math.max(streak.longestStreak, userProfile.streakData?.longestStreak || 0),
+      }));
+      
+      console.log("Calendar day updated successfully", {
+        action: modalAction,
+        day: selectedDay,
+        newActiveDays: updatedActiveDays,
+        newStreak: streak
+      });
     } catch (error) {
       console.error("Error updating calendar day:", error);
     } finally {
@@ -500,7 +576,7 @@ export default function Dashboard() {
           <h2 className="text-xl font-bold text-[var(--apple-gray-900)] dark:text-white">What do I want?</h2>
           <button 
             onClick={() => setIsEditingGoal(!isEditingGoal)}
-            className="text-sm text-[#39e991] font-medium hover:underline"
+            className="text-sm text-[var(--theme-color)] font-medium hover:underline"
           >
             {isEditingGoal ? 'Cancel' : userGoal ? 'Edit Goal' : 'Set Goal'}
           </button>
@@ -512,13 +588,13 @@ export default function Dashboard() {
               value={userGoal}
               onChange={(e) => setUserGoal(e.target.value)}
               placeholder="Enter your primary goal here..."
-              className="w-full p-4 border border-[var(--apple-gray-300)] dark:border-[var(--apple-gray-600)] rounded-lg focus:ring-[#39e991] focus:border-[#39e991] bg-white dark:bg-[var(--apple-gray-700)] text-[var(--apple-gray-900)] dark:text-white"
+              className="w-full p-4 border border-[var(--apple-gray-300)] dark:border-[var(--apple-gray-600)] rounded-lg focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] bg-white dark:bg-[var(--apple-gray-700)] text-[var(--apple-gray-900)] dark:text-white"
               rows={3}
             />
             <div className="flex justify-end mt-4">
               <button
                 type="submit"
-                className="px-4 py-2 bg-[#39e991] hover:brightness-95 text-[var(--apple-gray-900)] font-medium rounded-md"
+                className="px-4 py-2 bg-[var(--theme-color)] hover:brightness-95 text-[var(--apple-gray-900)] font-medium rounded-md"
               >
                 Save Goal
               </button>
@@ -670,7 +746,7 @@ export default function Dashboard() {
       <div className="apple-card p-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold text-[var(--apple-gray-900)] dark:text-white">Recent Reports</h2>
-          <Link href="/reports" className="text-[#39e991] hover:brightness-95 text-sm font-medium">
+          <Link href="/reports" className="text-[var(--theme-color)] hover:brightness-95 text-sm font-medium">
             View all
           </Link>
         </div>

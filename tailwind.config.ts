@@ -6,7 +6,14 @@ const config: Config = {
     extend: {
       colors: {
         green: {
-          primary: "#39e991",
+          primary: "var(--theme-color)",
+        },
+        theme: {
+          DEFAULT: "var(--theme-color)",
+          green: "#39e991",
+          blue: "#3B82F6",
+          red: "#EF4444",
+          yellow: "#F59E0B",
         },
       },
       backgroundImage: {

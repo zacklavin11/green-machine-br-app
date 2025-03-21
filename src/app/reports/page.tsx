@@ -174,7 +174,7 @@ export default function ReportsPage() {
             </div>
             <input
               type="text"
-              className="block w-full pl-10 pr-3 py-2 border border-[var(--apple-gray-300)] dark:border-[var(--apple-gray-600)] rounded-md shadow-sm focus:ring-[#39e991] focus:border-[#39e991] bg-white dark:bg-[var(--apple-gray-700)] text-[var(--apple-gray-900)] dark:text-white"
+              className="block w-full pl-10 pr-3 py-2 border border-[var(--apple-gray-300)] dark:border-[var(--apple-gray-600)] rounded-md shadow-sm focus:ring-[var(--reports-theme-color)] focus:border-[var(--reports-theme-color)] bg-white dark:bg-[var(--apple-gray-700)] text-[var(--apple-gray-900)] dark:text-white"
               placeholder="Search reports by title or content..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -191,7 +191,7 @@ export default function ReportsPage() {
       {loading && (
         <div className="apple-card p-8 flex flex-col items-center justify-center">
           <div className="relative">
-            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-[#39e991]"></div>
+            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-[var(--reports-theme-color)]"></div>
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="h-8 w-8 bg-white dark:bg-[var(--apple-gray-800)] rounded-full"></div>
             </div>
@@ -242,7 +242,7 @@ export default function ReportsPage() {
             <Link href={`/reports/${report.id}`} key={report.id} className="apple-card hover:shadow-md transition-shadow group overflow-hidden">
               <div className="relative">
                 {/* Colored top bar to indicate completion status */}
-                <div className={`absolute top-0 left-0 right-0 h-1 ${report.pdca?.didPlannedHappen && report.pdca?.hadUrgency && report.pdca?.managedTime ? 'bg-[#39e991]' : 'bg-amber-400'}`}></div>
+                <div className={`absolute top-0 left-0 right-0 h-1 ${report.pdca?.didPlannedHappen && report.pdca?.hadUrgency && report.pdca?.managedTime ? 'bg-[var(--reports-theme-color)]' : 'bg-amber-400'}`}></div>
                 
                 {/* Card content with slightly more padding */}
                 <div className="p-6 pt-7">
@@ -253,7 +253,7 @@ export default function ReportsPage() {
                           {report.dayNumber ? `Day ${report.dayNumber}` : 'No Day #'}
                         </h2>
                         {report.pdca?.didPlannedHappen && report.pdca?.hadUrgency && report.pdca?.managedTime && (
-                          <div className="ml-2 flex items-center justify-center bg-[#39e991] rounded-full h-5 w-5">
+                          <div className="ml-2 flex items-center justify-center bg-[var(--reports-theme-color)] rounded-full h-5 w-5">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-white" viewBox="0 0 20 20" fill="currentColor">
                               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                             </svg>
@@ -318,7 +318,7 @@ export default function ReportsPage() {
                       <div className="text-[var(--apple-gray-700)] dark:text-[var(--apple-gray-300)] text-sm">
                         {report.actionItems.slice(0, 2).map((item, index) => (
                           <div key={index} className="flex items-center mb-1">
-                            <div className={`flex-shrink-0 h-3.5 w-3.5 rounded-full mr-2 flex items-center justify-center ${item.completed ? 'bg-[#39e991]' : 'border border-[var(--apple-gray-400)]'}`}>
+                            <div className={`flex-shrink-0 h-3.5 w-3.5 rounded-full mr-2 flex items-center justify-center ${item.completed ? 'bg-[var(--reports-theme-color)]' : 'border border-[var(--apple-gray-400)]'}`}>
                               {item.completed && (
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5 text-white" viewBox="0 0 20 20" fill="currentColor">
                                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -339,7 +339,7 @@ export default function ReportsPage() {
                   
                   {/* View details button that appears on hover */}
                   <div className="mt-4 pt-2 border-t border-[var(--apple-gray-200)] dark:border-[var(--apple-gray-700)] flex justify-end">
-                    <span className="text-xs text-[#39e991] font-medium group-hover:underline">
+                    <span className="text-xs text-[var(--reports-theme-color)] font-medium group-hover:underline">
                       View Details →
                     </span>
                   </div>
@@ -350,8 +350,8 @@ export default function ReportsPage() {
         </div>
       ) : !loading ? (
         <div className="apple-card p-8 text-center">
-          <div className="mx-auto w-16 h-16 rounded-full bg-[#39e991]/10 flex items-center justify-center mb-4">
-            <FileText className="h-8 w-8 text-[#39e991]" />
+          <div className="mx-auto w-16 h-16 rounded-full bg-[var(--reports-theme-color)]/10 flex items-center justify-center mb-4">
+            <FileText className="h-8 w-8 text-[var(--reports-theme-color)]" />
           </div>
           <h2 className="text-xl font-bold text-[var(--apple-gray-900)] dark:text-white mb-2">No reports yet</h2>
           <p className="text-[var(--apple-gray-500)] dark:text-[var(--apple-gray-400)] mb-6 max-w-md mx-auto">

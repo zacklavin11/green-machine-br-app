@@ -3,18 +3,22 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, User, Save, LogOut } from "lucide-react";
+import { ArrowLeft, User, Save, LogOut, Palette } from "lucide-react";
 import { useAuth } from "../../lib/hooks/useAuth";
+import { useTheme } from "../../lib/hooks/useTheme";
 import { getUserProfile, updateUserProfile } from "../../lib/firebase/firebaseUtils";
 
 export default function SettingsPage() {
   const { user, signOut } = useAuth();
+  const { colorTheme, setColorTheme } = useTheme();
   const router = useRouter();
   const [name, setName] = useState("");
   const [originalName, setOriginalName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
+  const [isEditingGoal, setIsEditingGoal] = useState(false);
+  const [userGoal, setUserGoal] = useState(0);
 
   useEffect(() => {
     async function loadUserProfile() {
@@ -28,10 +32,12 @@ export default function SettingsPage() {
         if (userProfile) {
           setName(userProfile.name || user.displayName || "");
           setOriginalName(userProfile.name || user.displayName || "");
+          setUserGoal(userProfile.goal || 0);
         } else {
           // If no profile exists yet, use the display name from Google
           setName(user.displayName || "");
           setOriginalName(user.displayName || "");
+          setUserGoal(0);
         }
       } catch (error) {
         console.error("Error loading user profile:", error);
@@ -62,7 +68,7 @@ export default function SettingsPage() {
     setMessage(null);
     
     try {
-      await updateUserProfile(user.uid, { name });
+      await updateUserProfile(user.uid, { name, goal: userGoal });
       setOriginalName(name);
       setMessage({
         text: "Profile updated successfully!",
@@ -93,6 +99,15 @@ export default function SettingsPage() {
         type: "error"
       });
     }
+  };
+
+  const handleColorThemeChange = (newTheme: "green" | "blue" | "red" | "yellow") => {
+    setColorTheme(newTheme);
+    setMessage({
+      text: `Theme color changed to ${newTheme}!`,
+      type: "success"
+    });
+    setTimeout(() => setMessage(null), 3000);
   };
 
   return (
@@ -139,7 +154,7 @@ export default function SettingsPage() {
                     id="name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="block w-full pl-10 pr-3 py-2 border border-[var(--apple-gray-300)] dark:border-[var(--apple-gray-600)] rounded-md shadow-sm focus:ring-[#39e991] focus:border-[#39e991] bg-white dark:bg-[var(--apple-gray-700)] text-[var(--apple-gray-900)] dark:text-white"
+                    className="block w-full pl-10 pr-3 py-2 border border-[var(--apple-gray-300)] dark:border-[var(--apple-gray-600)] rounded-md shadow-sm focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] bg-white dark:bg-[var(--apple-gray-700)] text-[var(--apple-gray-900)] dark:text-white"
                     placeholder="Your name"
                   />
                 </div>
@@ -180,6 +195,79 @@ export default function SettingsPage() {
           </div>
         </div>
         
+        {/* Theme Settings Card */}
+        <div className="apple-card mb-6">
+          <div className="p-6 border-b border-[var(--apple-gray-200)] dark:border-[var(--apple-gray-700)]">
+            <div className="flex items-center">
+              <Palette className="h-5 w-5 mr-2 text-[var(--theme-color)]" />
+              <h2 className="text-xl font-bold text-[var(--apple-gray-900)] dark:text-white mb-1">Color</h2>
+            </div>
+            <p className="text-[var(--apple-gray-500)] dark:text-[var(--apple-gray-400)]">
+              Customize the look and feel of your 90 Day Run Tracker
+            </p>
+          </div>
+          
+          <div className="p-6">
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-[var(--apple-gray-700)] dark:text-[var(--apple-gray-300)] mb-3">
+                What Personality color are you?
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <button 
+                  onClick={() => handleColorThemeChange("red")}
+                  className={`flex flex-col items-center p-4 rounded-lg border transition-all ${
+                    colorTheme === "red" 
+                      ? 'border-[#EF4444] bg-[#EF4444]/10 dark:bg-[#EF4444]/5' 
+                      : 'border-[var(--apple-gray-200)] dark:border-[var(--apple-gray-700)] hover:border-[#EF4444] hover:bg-[#EF4444]/5'
+                  }`}
+                >
+                  <div className="h-12 w-12 rounded-full bg-[#EF4444] mb-2"></div>
+                  <span className="text-sm font-medium text-[var(--apple-gray-900)] dark:text-white">Red</span>
+                </button>
+
+                <button 
+                  onClick={() => handleColorThemeChange("green")}
+                  className={`flex flex-col items-center p-4 rounded-lg border transition-all ${
+                    colorTheme === "green" 
+                      ? 'border-[#39e991] bg-[#39e991]/10 dark:bg-[#39e991]/5' 
+                      : 'border-[var(--apple-gray-200)] dark:border-[var(--apple-gray-700)] hover:border-[#39e991] hover:bg-[#39e991]/5'
+                  }`}
+                >
+                  <div className="h-12 w-12 rounded-full bg-[#39e991] mb-2"></div>
+                  <span className="text-sm font-medium text-[var(--apple-gray-900)] dark:text-white">Green</span>
+                </button>
+                
+                <button 
+                  onClick={() => handleColorThemeChange("yellow")}
+                  className={`flex flex-col items-center p-4 rounded-lg border transition-all ${
+                    colorTheme === "yellow" 
+                      ? 'border-[#F59E0B] bg-[#F59E0B]/10 dark:bg-[#F59E0B]/5' 
+                      : 'border-[var(--apple-gray-200)] dark:border-[var(--apple-gray-700)] hover:border-[#F59E0B] hover:bg-[#F59E0B]/5'
+                  }`}
+                >
+                  <div className="h-12 w-12 rounded-full bg-[#F59E0B] mb-2"></div>
+                  <span className="text-sm font-medium text-[var(--apple-gray-900)] dark:text-white">Yellow</span>
+                </button>
+                
+                <button 
+                  onClick={() => handleColorThemeChange("blue")}
+                  className={`flex flex-col items-center p-4 rounded-lg border transition-all ${
+                    colorTheme === "blue" 
+                      ? 'border-[#3B82F6] bg-[#3B82F6]/10 dark:bg-[#3B82F6]/5' 
+                      : 'border-[var(--apple-gray-200)] dark:border-[var(--apple-gray-700)] hover:border-[#3B82F6] hover:bg-[#3B82F6]/5'
+                  }`}
+                >
+                  <div className="h-12 w-12 rounded-full bg-[#3B82F6] mb-2"></div>
+                  <span className="text-sm font-medium text-[var(--apple-gray-900)] dark:text-white">Blue</span>
+                </button>
+              </div>
+              <p className="mt-3 text-sm text-[var(--apple-gray-500)] dark:text-[var(--apple-gray-400)]">
+                Choose the color that best represents your personality.
+              </p>
+            </div>
+          </div>
+        </div>
+        
         <div className="apple-card mb-6">
           <div className="p-6 border-b border-[var(--apple-gray-200)] dark:border-[var(--apple-gray-700)]">
             <h2 className="text-xl font-bold text-[var(--apple-gray-900)] dark:text-white mb-1">Account</h2>
@@ -209,6 +297,47 @@ export default function SettingsPage() {
             <p className="mt-2 text-sm text-[var(--apple-gray-500)] dark:text-[var(--apple-gray-400)]">
               Sign out of your Google account.
             </p>
+          </div>
+        </div>
+
+        <div className="apple-card mb-6">
+          <div className="p-6 border-b border-[var(--apple-gray-200)] dark:border-[var(--apple-gray-700)]">
+            <h2 className="text-xl font-bold text-[var(--apple-gray-900)] dark:text-white mb-1">Goal</h2>
+            <p className="text-[var(--apple-gray-500)] dark:text-[var(--apple-gray-400)]">
+              Set or edit your goal
+            </p>
+          </div>
+          
+          <div className="p-6">
+            <div className="mb-6">
+              <label htmlFor="goal" className="block text-sm font-medium text-[var(--apple-gray-700)] dark:text-[var(--apple-gray-300)] mb-2">
+                Goal
+              </label>
+              <div className="flex items-center">
+                <div className="relative flex-1">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <User className="h-5 w-5 text-[var(--apple-gray-400)]" />
+                  </div>
+                  <input
+                    type="number"
+                    id="goal"
+                    value={userGoal}
+                    onChange={(e) => setUserGoal(Number(e.target.value))}
+                    className="block w-full pl-10 pr-3 py-2 border border-[var(--apple-gray-300)] dark:border-[var(--apple-gray-600)] rounded-md shadow-sm focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] bg-white dark:bg-[var(--apple-gray-700)] text-[var(--apple-gray-900)] dark:text-white"
+                    placeholder="Enter your goal"
+                  />
+                </div>
+                <button
+                  onClick={() => setIsEditingGoal(!isEditingGoal)}
+                  className="text-sm text-[var(--theme-color)] font-medium hover:underline"
+                >
+                  {isEditingGoal ? 'Cancel' : userGoal ? 'Edit Goal' : 'Set Goal'}
+                </button>
+              </div>
+              <p className="mt-2 text-sm text-[var(--apple-gray-500)] dark:text-[var(--apple-gray-400)]">
+                Set your goal for the 90 Day Run Tracker
+              </p>
+            </div>
           </div>
         </div>
       </div>

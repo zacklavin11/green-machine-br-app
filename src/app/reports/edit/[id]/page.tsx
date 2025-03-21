@@ -202,7 +202,7 @@ export default function EditReportPage({ params }: { params: { id: string } }) {
     return (
       <div className="p-8 flex justify-center items-center min-h-screen">
         <div className="apple-card p-8 text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#39e991] mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[var(--reports-theme-color)] mx-auto mb-4"></div>
           <h2 className="text-xl font-bold text-[var(--apple-gray-900)] dark:text-white mb-2">
             Loading Report
           </h2>
@@ -270,7 +270,7 @@ export default function EditReportPage({ params }: { params: { id: string } }) {
                   name="dayNumber"
                   value={formData.dayNumber}
                   onChange={handleChange}
-                  className="block w-full px-3 py-2 border border-[var(--apple-gray-300)] dark:border-[var(--apple-gray-600)] rounded-md shadow-sm focus:ring-[#39e991] focus:border-[#39e991] bg-white dark:bg-[var(--apple-gray-700)] text-[var(--apple-gray-900)] dark:text-white"
+                  className="block w-full px-3 py-2 border border-[var(--apple-gray-300)] dark:border-[var(--apple-gray-600)] rounded-md shadow-sm focus:ring-[var(--reports-theme-color)] focus:border-[var(--reports-theme-color)] bg-white dark:bg-[var(--apple-gray-700)] text-[var(--apple-gray-900)] dark:text-white"
                   placeholder="e.g. 1, 2, 3, etc."
                 />
               </div>
@@ -285,7 +285,7 @@ export default function EditReportPage({ params }: { params: { id: string } }) {
                   name="bookTitle"
                   value={formData.bookTitle}
                   onChange={handleChange}
-                  className="block w-full px-3 py-2 border border-[var(--apple-gray-300)] dark:border-[var(--apple-gray-600)] rounded-md shadow-sm focus:ring-[#39e991] focus:border-[#39e991] bg-white dark:bg-[var(--apple-gray-700)] text-[var(--apple-gray-900)] dark:text-white"
+                  className="block w-full px-3 py-2 border border-[var(--apple-gray-300)] dark:border-[var(--apple-gray-600)] rounded-md shadow-sm focus:ring-[var(--reports-theme-color)] focus:border-[var(--reports-theme-color)] bg-white dark:bg-[var(--apple-gray-700)] text-[var(--apple-gray-900)] dark:text-white"
                   placeholder="Enter book title"
                 />
               </div>
@@ -305,7 +305,7 @@ export default function EditReportPage({ params }: { params: { id: string } }) {
                   name="date"
                   value={formData.date}
                   onChange={handleChange}
-                  className="block w-full pl-10 pr-3 py-2 border border-[var(--apple-gray-300)] dark:border-[var(--apple-gray-600)] rounded-md shadow-sm focus:ring-[#39e991] focus:border-[#39e991] bg-white dark:bg-[var(--apple-gray-700)] text-[var(--apple-gray-900)] dark:text-white"
+                  className="block w-full pl-10 pr-3 py-2 border border-[var(--apple-gray-300)] dark:border-[var(--apple-gray-600)] rounded-md shadow-sm focus:ring-[var(--reports-theme-color)] focus:border-[var(--reports-theme-color)] bg-white dark:bg-[var(--apple-gray-700)] text-[var(--apple-gray-900)] dark:text-white"
                 />
               </div>
             </div>
@@ -320,13 +320,13 @@ export default function EditReportPage({ params }: { params: { id: string } }) {
                 name="pages"
                 value={formData.pages}
                 onChange={handleChange}
-                className="block w-full px-3 py-2 border border-[var(--apple-gray-300)] dark:border-[var(--apple-gray-600)] rounded-md shadow-sm focus:ring-[#39e991] focus:border-[#39e991] bg-white dark:bg-[var(--apple-gray-700)] text-[var(--apple-gray-900)] dark:text-white"
+                className="block w-full px-3 py-2 border border-[var(--apple-gray-300)] dark:border-[var(--apple-gray-600)] rounded-md shadow-sm focus:ring-[var(--reports-theme-color)] focus:border-[var(--reports-theme-color)] bg-white dark:bg-[var(--apple-gray-700)] text-[var(--apple-gray-900)] dark:text-white"
                 placeholder="e.g. 10-25 or Chapter 3"
               />
             </div>
 
             {/* PDCA Section */}
-            <div className="bg-[#39e991]/10 dark:bg-[#39e991]/5 p-4 rounded-md mb-6 border border-[#39e991]/20 dark:border-[#39e991]/10">
+            <div className="bg-[var(--reports-theme-color)]/10 dark:bg-[var(--reports-theme-color)]/5 p-4 rounded-md mb-6 border border-[var(--reports-theme-color)]/20 dark:border-[var(--reports-theme-color)]/10">
               <h3 className="font-semibold text-[var(--apple-gray-900)] dark:text-white mb-3">Daily PDCA:</h3>
               <ul className="space-y-2">
                 <li className="flex items-start">
@@ -336,7 +336,7 @@ export default function EditReportPage({ params }: { params: { id: string } }) {
                       name="didPlannedHappen"
                       checked={formData.pdca.didPlannedHappen}
                       onChange={handlePdcaChange}
-                      className="h-4 w-4 rounded border-[var(--apple-gray-300)] text-[#39e991] focus:ring-[#39e991]"
+                      className="h-4 w-4 rounded border-[var(--apple-gray-300)] text-[var(--reports-theme-color)] focus:ring-[var(--reports-theme-color)]"
                     />
                   </div>
                   <div className="ml-3 text-sm">
@@ -350,7 +350,7 @@ export default function EditReportPage({ params }: { params: { id: string } }) {
                       name="hadUrgency"
                       checked={formData.pdca.hadUrgency}
                       onChange={handlePdcaChange}
-                      className="h-4 w-4 rounded border-[var(--apple-gray-300)] text-[#39e991] focus:ring-[#39e991]"
+                      className="h-4 w-4 rounded border-[var(--apple-gray-300)] text-[var(--reports-theme-color)] focus:ring-[var(--reports-theme-color)]"
                     />
                   </div>
                   <div className="ml-3 text-sm">
@@ -364,7 +364,7 @@ export default function EditReportPage({ params }: { params: { id: string } }) {
                       name="managedTime"
                       checked={formData.pdca.managedTime}
                       onChange={handlePdcaChange}
-                      className="h-4 w-4 rounded border-[var(--apple-gray-300)] text-[#39e991] focus:ring-[#39e991]"
+                      className="h-4 w-4 rounded border-[var(--apple-gray-300)] text-[var(--reports-theme-color)] focus:ring-[var(--reports-theme-color)]"
                     />
                   </div>
                   <div className="ml-3 text-sm">
@@ -380,7 +380,7 @@ export default function EditReportPage({ params }: { params: { id: string } }) {
                     value={formData.pdca.adjustments}
                     onChange={handlePdcaChange}
                     rows={2}
-                    className="block w-full px-3 py-2 border border-[var(--apple-gray-300)] dark:border-[var(--apple-gray-600)] rounded-md shadow-sm focus:ring-[#39e991] focus:border-[#39e991] bg-white dark:bg-[var(--apple-gray-700)] text-[var(--apple-gray-900)] dark:text-white"
+                    className="block w-full px-3 py-2 border border-[var(--apple-gray-300)] dark:border-[var(--apple-gray-600)] rounded-md shadow-sm focus:ring-[var(--reports-theme-color)] focus:border-[var(--reports-theme-color)] bg-white dark:bg-[var(--apple-gray-700)] text-[var(--apple-gray-900)] dark:text-white"
                     placeholder="Note any adjustments needed..."
                   ></textarea>
                 </li>
@@ -397,7 +397,7 @@ export default function EditReportPage({ params }: { params: { id: string } }) {
                 value={formData.what}
                 onChange={handleChange}
                 rows={4}
-                className="block w-full px-3 py-2 border border-[var(--apple-gray-300)] dark:border-[var(--apple-gray-600)] rounded-md shadow-sm focus:ring-[#39e991] focus:border-[#39e991] bg-white dark:bg-[var(--apple-gray-700)] text-[var(--apple-gray-900)] dark:text-white"
+                className="block w-full px-3 py-2 border border-[var(--apple-gray-300)] dark:border-[var(--apple-gray-600)] rounded-md shadow-sm focus:ring-[var(--reports-theme-color)] focus:border-[var(--reports-theme-color)] bg-white dark:bg-[var(--apple-gray-700)] text-[var(--apple-gray-900)] dark:text-white"
                 placeholder="Briefly summarize what you read..."
               ></textarea>
             </div>
@@ -412,7 +412,7 @@ export default function EditReportPage({ params }: { params: { id: string } }) {
                 value={formData.soWhat}
                 onChange={handleChange}
                 rows={4}
-                className="block w-full px-3 py-2 border border-[var(--apple-gray-300)] dark:border-[var(--apple-gray-600)] rounded-md shadow-sm focus:ring-[#39e991] focus:border-[#39e991] bg-white dark:bg-[var(--apple-gray-700)] text-[var(--apple-gray-900)] dark:text-white"
+                className="block w-full px-3 py-2 border border-[var(--apple-gray-300)] dark:border-[var(--apple-gray-600)] rounded-md shadow-sm focus:ring-[var(--reports-theme-color)] focus:border-[var(--reports-theme-color)] bg-white dark:bg-[var(--apple-gray-700)] text-[var(--apple-gray-900)] dark:text-white"
                 placeholder="How have you internalized what you read?"
               ></textarea>
             </div>
@@ -426,7 +426,7 @@ export default function EditReportPage({ params }: { params: { id: string } }) {
                 <button 
                   type="button" 
                   onClick={addActionItem}
-                  className="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-[#39e991] bg-[#39e991]/10 hover:bg-[#39e991]/20 dark:bg-[#39e991]/5 dark:hover:bg-[#39e991]/10"
+                  className="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-[var(--reports-theme-color)] bg-[var(--reports-theme-color)]/10 hover:bg-[var(--reports-theme-color)]/20 dark:bg-[var(--reports-theme-color)]/5 dark:hover:bg-[var(--reports-theme-color)]/10"
                 >
                   <PlusCircle className="h-4 w-4 mr-1" />
                   Add Item
@@ -440,13 +440,13 @@ export default function EditReportPage({ params }: { params: { id: string } }) {
                       type="checkbox"
                       checked={item.completed}
                       onChange={() => toggleActionItem(index)}
-                      className="h-4 w-4 rounded border-[var(--apple-gray-300)] text-[#39e991] focus:ring-[#39e991]"
+                      className="h-4 w-4 rounded border-[var(--apple-gray-300)] text-[var(--reports-theme-color)] focus:ring-[var(--reports-theme-color)]"
                     />
                     <input
                       type="text"
                       value={item.text}
                       onChange={(e) => updateActionItem(index, e.target.value)}
-                      className="flex-1 px-3 py-2 border border-[var(--apple-gray-300)] dark:border-[var(--apple-gray-600)] rounded-md shadow-sm focus:ring-[#39e991] focus:border-[#39e991] bg-white dark:bg-[var(--apple-gray-700)] text-[var(--apple-gray-900)] dark:text-white"
+                      className="flex-1 px-3 py-2 border border-[var(--apple-gray-300)] dark:border-[var(--apple-gray-600)] rounded-md shadow-sm focus:ring-[var(--reports-theme-color)] focus:border-[var(--reports-theme-color)] bg-white dark:bg-[var(--apple-gray-700)] text-[var(--apple-gray-900)] dark:text-white"
                       placeholder="Add an action item..."
                     />
                     <button
@@ -493,7 +493,7 @@ export default function EditReportPage({ params }: { params: { id: string } }) {
             {isSubmitting && (
               <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                 <div className="bg-white dark:bg-[var(--apple-gray-800)] rounded-lg p-8 max-w-md w-full shadow-xl text-center">
-                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#39e991] mx-auto mb-4"></div>
+                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[var(--reports-theme-color)] mx-auto mb-4"></div>
                   <h2 className="text-xl font-bold text-[var(--apple-gray-900)] dark:text-white mb-2">
                     Updating Your Report
                   </h2>
