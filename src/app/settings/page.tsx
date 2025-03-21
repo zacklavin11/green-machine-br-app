@@ -200,17 +200,17 @@ export default function SettingsPage() {
           <div className="p-6 border-b border-[var(--apple-gray-200)] dark:border-[var(--apple-gray-700)]">
             <div className="flex items-center">
               <Palette className="h-5 w-5 mr-2 text-[var(--theme-color)]" />
-              <h2 className="text-xl font-bold text-[var(--apple-gray-900)] dark:text-white mb-1">Color</h2>
+              <h2 className="text-xl font-bold text-[var(--apple-gray-900)] dark:text-white mb-1">Report Colors</h2>
             </div>
             <p className="text-[var(--apple-gray-500)] dark:text-[var(--apple-gray-400)]">
-              Customize the look and feel of your 90 Day Run Tracker
+              Update color of your reports for sharing
             </p>
           </div>
           
           <div className="p-6">
             <div className="mb-6">
               <label className="block text-sm font-medium text-[var(--apple-gray-700)] dark:text-[var(--apple-gray-300)] mb-3">
-                What Personality color are you?
+                Choose a color for your shared reports
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <button 
@@ -262,7 +262,7 @@ export default function SettingsPage() {
                 </button>
               </div>
               <p className="mt-3 text-sm text-[var(--apple-gray-500)] dark:text-[var(--apple-gray-400)]">
-                Choose the color that best represents your personality.
+                Select a color to style your exported and shared reports.
               </p>
             </div>
           </div>

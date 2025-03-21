@@ -4,6 +4,7 @@ import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getAnalytics } from "firebase/analytics";
 
+// Ensure environment variables are available
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -14,11 +15,30 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
-// Initialize Firebase
-const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+// Check for missing config
+if (!firebaseConfig.apiKey || !firebaseConfig.projectId || !firebaseConfig.storageBucket) {
+  console.warn("Firebase configuration is incomplete. Check your environment variables.");
+}
+
+// Initialize Firebase with explicit singleton pattern
+let app;
+if (getApps().length === 0) {
+  console.log("Initializing Firebase app");
+  app = initializeApp(firebaseConfig);
+} else {
+  console.log("Firebase app already initialized, reusing");
+  app = getApp();
+}
+
+// Initialize services
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
+
+// Log config for debugging
+if (typeof window !== 'undefined') {
+  console.log("Firebase initialized with bucket:", firebaseConfig.storageBucket);
+}
 
 // Analytics can only be initialized on the client side
 let analytics = null;

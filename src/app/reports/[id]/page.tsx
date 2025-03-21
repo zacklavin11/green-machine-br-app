@@ -564,7 +564,7 @@ export default function ReportPage({ params }: { params: { id: string } }) {
       <div id="report-container" className="max-w-4xl mx-auto">
         {/* Report header with user info */}
         <div className="apple-card mb-6 overflow-hidden">
-          <div className={`absolute inset-0 flex items-start justify-center rounded-t-md ${report.pdca?.didPlannedHappen && report.pdca?.hadUrgency && report.pdca?.managedTime ? 'bg-[var(--reports-theme-color)]' : 'bg-amber-400'}`}></div>
+          <div className="h-2 bg-[var(--reports-theme-color)]"></div>
           <div className="relative px-8 py-6 border-b border-[var(--apple-gray-200)] dark:border-[var(--apple-gray-700)]">
             <div className="flex justify-between items-start">
               <div>
@@ -610,13 +610,13 @@ export default function ReportPage({ params }: { params: { id: string } }) {
             
             {/* PDCA indicators in a row */}
             <div className="flex items-center space-x-2 mt-4">
-              <div className={`text-xs px-3 py-1 rounded-full ${report.pdca?.didPlannedHappen ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100'}`}>
+              <div className={`text-xs px-3 py-1 rounded-full ${report.pdca?.didPlannedHappen ? 'bg-[var(--reports-theme-color)]/10 text-[var(--reports-theme-color)] dark:bg-[var(--reports-theme-color)]/20 dark:text-[var(--reports-theme-color)]/90' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100'}`}>
                 Planned: {report.pdca?.didPlannedHappen ? 'Yes' : 'No'}
               </div>
-              <div className={`text-xs px-3 py-1 rounded-full ${report.pdca?.hadUrgency ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100'}`}>
+              <div className={`text-xs px-3 py-1 rounded-full ${report.pdca?.hadUrgency ? 'bg-[var(--reports-theme-color)]/10 text-[var(--reports-theme-color)] dark:bg-[var(--reports-theme-color)]/20 dark:text-[var(--reports-theme-color)]/90' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100'}`}>
                 Urgency: {report.pdca?.hadUrgency ? 'Yes' : 'No'}
               </div>
-              <div className={`text-xs px-3 py-1 rounded-full ${report.pdca?.managedTime ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100'}`}>
+              <div className={`text-xs px-3 py-1 rounded-full ${report.pdca?.managedTime ? 'bg-[var(--reports-theme-color)]/10 text-[var(--reports-theme-color)] dark:bg-[var(--reports-theme-color)]/20 dark:text-[var(--reports-theme-color)]/90' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100'}`}>
                 Time Management: {report.pdca?.managedTime ? 'Yes' : 'No'}
               </div>
             </div>
@@ -643,9 +643,9 @@ export default function ReportPage({ params }: { params: { id: string } }) {
             <h2 className="text-xl font-bold text-[var(--apple-gray-900)] dark:text-white mb-4">PDCA Analysis</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className={`p-4 rounded-lg border ${report.pdca?.didPlannedHappen ? 'border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-900/20' : 'border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-900/20'}`}>
+              <div className={`p-4 rounded-lg border ${report.pdca?.didPlannedHappen ? 'border-[var(--reports-theme-color)]/20 bg-[var(--reports-theme-color)]/5 dark:border-[var(--reports-theme-color)]/30 dark:bg-[var(--reports-theme-color)]/10' : 'border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-900/20'}`}>
                 <div className="flex items-center">
-                  <div className={`flex-shrink-0 h-6 w-6 rounded-full flex items-center justify-center ${report.pdca?.didPlannedHappen ? 'bg-green-500' : 'bg-red-500'}`}>
+                  <div className={`flex-shrink-0 h-6 w-6 rounded-full flex items-center justify-center ${report.pdca?.didPlannedHappen ? 'bg-[var(--reports-theme-color)]' : 'bg-red-500'}`}>
                     {report.pdca?.didPlannedHappen ? (
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -657,17 +657,17 @@ export default function ReportPage({ params }: { params: { id: string } }) {
                     )}
                   </div>
                   <div className="ml-3">
-                    <h3 className={`text-sm font-medium ${report.pdca?.didPlannedHappen ? 'text-green-800 dark:text-green-100' : 'text-red-800 dark:text-red-100'}`}>PLANNED HAPPENED</h3>
-                    <p className={`text-xs ${report.pdca?.didPlannedHappen ? 'text-green-700 dark:text-green-200' : 'text-red-700 dark:text-red-200'}`}>
+                    <h3 className={`text-sm font-medium ${report.pdca?.didPlannedHappen ? 'text-[var(--reports-theme-color)] dark:text-[var(--reports-theme-color)]/90' : 'text-red-800 dark:text-red-100'}`}>PLANNED HAPPENED</h3>
+                    <p className={`text-xs ${report.pdca?.didPlannedHappen ? 'text-[var(--reports-theme-color)]/80 dark:text-[var(--reports-theme-color)]/70' : 'text-red-700 dark:text-red-200'}`}>
                       {report.pdca?.didPlannedHappen ? 'Yes' : 'No'}
                     </p>
                   </div>
                 </div>
               </div>
               
-              <div className={`p-4 rounded-lg border ${report.pdca?.hadUrgency ? 'border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-900/20' : 'border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-900/20'}`}>
+              <div className={`p-4 rounded-lg border ${report.pdca?.hadUrgency ? 'border-[var(--reports-theme-color)]/20 bg-[var(--reports-theme-color)]/5 dark:border-[var(--reports-theme-color)]/30 dark:bg-[var(--reports-theme-color)]/10' : 'border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-900/20'}`}>
                 <div className="flex items-center">
-                  <div className={`flex-shrink-0 h-6 w-6 rounded-full flex items-center justify-center ${report.pdca?.hadUrgency ? 'bg-green-500' : 'bg-red-500'}`}>
+                  <div className={`flex-shrink-0 h-6 w-6 rounded-full flex items-center justify-center ${report.pdca?.hadUrgency ? 'bg-[var(--reports-theme-color)]' : 'bg-red-500'}`}>
                     {report.pdca?.hadUrgency ? (
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -679,17 +679,17 @@ export default function ReportPage({ params }: { params: { id: string } }) {
                     )}
                   </div>
                   <div className="ml-3">
-                    <h3 className={`text-sm font-medium ${report.pdca?.hadUrgency ? 'text-green-800 dark:text-green-100' : 'text-red-800 dark:text-red-100'}`}>HAD URGENCY</h3>
-                    <p className={`text-xs ${report.pdca?.hadUrgency ? 'text-green-700 dark:text-green-200' : 'text-red-700 dark:text-red-200'}`}>
+                    <h3 className={`text-sm font-medium ${report.pdca?.hadUrgency ? 'text-[var(--reports-theme-color)] dark:text-[var(--reports-theme-color)]/90' : 'text-red-800 dark:text-red-100'}`}>HAD URGENCY</h3>
+                    <p className={`text-xs ${report.pdca?.hadUrgency ? 'text-[var(--reports-theme-color)]/80 dark:text-[var(--reports-theme-color)]/70' : 'text-red-700 dark:text-red-200'}`}>
                       {report.pdca?.hadUrgency ? 'Yes' : 'No'}
                     </p>
                   </div>
                 </div>
               </div>
               
-              <div className={`p-4 rounded-lg border ${report.pdca?.managedTime ? 'border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-900/20' : 'border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-900/20'}`}>
+              <div className={`p-4 rounded-lg border ${report.pdca?.managedTime ? 'border-[var(--reports-theme-color)]/20 bg-[var(--reports-theme-color)]/5 dark:border-[var(--reports-theme-color)]/30 dark:bg-[var(--reports-theme-color)]/10' : 'border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-900/20'}`}>
                 <div className="flex items-center">
-                  <div className={`flex-shrink-0 h-6 w-6 rounded-full flex items-center justify-center ${report.pdca?.managedTime ? 'bg-green-500' : 'bg-red-500'}`}>
+                  <div className={`flex-shrink-0 h-6 w-6 rounded-full flex items-center justify-center ${report.pdca?.managedTime ? 'bg-[var(--reports-theme-color)]' : 'bg-red-500'}`}>
                     {report.pdca?.managedTime ? (
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -701,8 +701,8 @@ export default function ReportPage({ params }: { params: { id: string } }) {
                     )}
                   </div>
                   <div className="ml-3">
-                    <h3 className={`text-sm font-medium ${report.pdca?.managedTime ? 'text-green-800 dark:text-green-100' : 'text-red-800 dark:text-red-100'}`}>MANAGED TIME</h3>
-                    <p className={`text-xs ${report.pdca?.managedTime ? 'text-green-700 dark:text-green-200' : 'text-red-700 dark:text-red-200'}`}>
+                    <h3 className={`text-sm font-medium ${report.pdca?.managedTime ? 'text-[var(--reports-theme-color)] dark:text-[var(--reports-theme-color)]/90' : 'text-red-800 dark:text-red-100'}`}>MANAGED TIME</h3>
+                    <p className={`text-xs ${report.pdca?.managedTime ? 'text-[var(--reports-theme-color)]/80 dark:text-[var(--reports-theme-color)]/70' : 'text-red-700 dark:text-red-200'}`}>
                       {report.pdca?.managedTime ? 'Yes' : 'No'}
                     </p>
                   </div>

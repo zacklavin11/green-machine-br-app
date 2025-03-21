@@ -7,14 +7,15 @@ import { motion } from "framer-motion";
 interface PageContainerProps {
   children: ReactNode;
   className?: string;
+  fullWidth?: boolean;
 }
 
-export default function PageContainer({ children, className = "" }: PageContainerProps) {
+export default function PageContainer({ children, className = "", fullWidth = false }: PageContainerProps) {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
       <motion.main 
-        className={`flex-grow p-4 sm:p-6 md:p-8 max-w-7xl w-full mx-auto ${className}`}
+        className={`flex-grow ${fullWidth ? 'p-4' : 'p-4 sm:p-6 md:p-8 max-w-7xl'} w-full mx-auto ${className}`}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}

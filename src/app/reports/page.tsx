@@ -242,7 +242,7 @@ export default function ReportsPage() {
             <Link href={`/reports/${report.id}`} key={report.id} className="apple-card hover:shadow-md transition-shadow group overflow-hidden">
               <div className="relative">
                 {/* Colored top bar to indicate completion status */}
-                <div className={`absolute top-0 left-0 right-0 h-1 ${report.pdca?.didPlannedHappen && report.pdca?.hadUrgency && report.pdca?.managedTime ? 'bg-[var(--reports-theme-color)]' : 'bg-amber-400'}`}></div>
+                <div className={`absolute top-0 left-0 right-0 h-1 bg-[var(--reports-theme-color)]`}></div>
                 
                 {/* Card content with slightly more padding */}
                 <div className="p-6 pt-7">
@@ -278,13 +278,13 @@ export default function ReportsPage() {
                   
                   {/* PDCA indicators in a row */}
                   <div className="flex items-center space-x-1 mb-3">
-                    <div className={`text-xs px-2 py-0.5 rounded-full ${report.pdca?.didPlannedHappen ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100'}`}>
+                    <div className={`text-xs px-2 py-0.5 rounded-full ${report.pdca?.didPlannedHappen ? 'bg-[var(--reports-theme-color)]/10 text-[var(--reports-theme-color)] dark:bg-[var(--reports-theme-color)]/20 dark:text-[var(--reports-theme-color)]' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100'}`}>
                       Plan
                     </div>
-                    <div className={`text-xs px-2 py-0.5 rounded-full ${report.pdca?.hadUrgency ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100'}`}>
+                    <div className={`text-xs px-2 py-0.5 rounded-full ${report.pdca?.hadUrgency ? 'bg-[var(--reports-theme-color)]/10 text-[var(--reports-theme-color)] dark:bg-[var(--reports-theme-color)]/20 dark:text-[var(--reports-theme-color)]' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100'}`}>
                       Urgency
                     </div>
-                    <div className={`text-xs px-2 py-0.5 rounded-full ${report.pdca?.managedTime ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100'}`}>
+                    <div className={`text-xs px-2 py-0.5 rounded-full ${report.pdca?.managedTime ? 'bg-[var(--reports-theme-color)]/10 text-[var(--reports-theme-color)] dark:bg-[var(--reports-theme-color)]/20 dark:text-[var(--reports-theme-color)]' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100'}`}>
                       Time
                     </div>
                   </div>

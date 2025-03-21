@@ -16,7 +16,9 @@ import {
   setDoc,
   query,
   where,
-  CollectionReference
+  CollectionReference,
+  orderBy,
+  limit
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { FirebaseError } from "firebase/app";
@@ -154,6 +156,106 @@ export const getUserData = async (userId: string, collectionName: string) => {
   } catch (error) {
     console.error(`Error getting user ${collectionName}:`, error);
     throw error;
+  }
+};
+
+/**
+ * Gets the most recent report for a user
+ * @param userId - The user ID
+ * @returns The most recent report or null if none exists
+ */
+export const getLatestReport = async (userId: string) => {
+  try {
+    console.log("Fetching latest report for user:", userId);
+    
+    // Define a type for the report data
+    type ReportData = {
+      id: string;
+      bookTitle?: string;
+      dayNumber?: string;
+      date?: string;
+      pages?: string;
+      createdAt?: any;
+      updatedAt?: any;
+      [key: string]: any;
+    };
+    
+    // Use a simpler approach - get all reports for this user in a single query
+    const reportsRef = collection(db, "reports");
+    const q = query(reportsRef, where("userId", "==", userId));
+    
+    const querySnapshot = await getDocs(q);
+    
+    if (querySnapshot.empty) {
+      console.log("No reports found for user");
+      return null;
+    }
+    
+    console.log(`Found ${querySnapshot.docs.length} reports, searching for the latest one...`);
+    
+    // Process all documents and find the most recent one
+    let latestReport: ReportData | null = null;
+    let latestDate: Date = new Date(0); // Start with oldest possible date
+    
+    querySnapshot.docs.forEach(doc => {
+      const data = doc.data();
+      const report = {
+        id: doc.id,
+        ...data
+      } as ReportData;
+      
+      // Convert Firestore timestamp to Date object
+      let createdAtDate: Date;
+      if (report.createdAt && typeof report.createdAt.toDate === 'function') {
+        createdAtDate = report.createdAt.toDate();
+      } else if (report.createdAt) {
+        // Handle string or number timestamp
+        createdAtDate = new Date(report.createdAt);
+      } else {
+        // Default to a very old date if createdAt is missing
+        createdAtDate = new Date(0);
+      }
+      
+      // Compare with current latest
+      if (createdAtDate > latestDate) {
+        latestDate = createdAtDate;
+        latestReport = report;
+        
+        // Store the date object for easier use
+        report.createdAt = createdAtDate;
+        
+        // Also convert updatedAt if it exists
+        if (report.updatedAt && typeof report.updatedAt.toDate === 'function') {
+          report.updatedAt = report.updatedAt.toDate();
+        }
+      }
+    });
+    
+    if (latestReport) {
+      // Force type casting for TypeScript
+      const typedReport = latestReport as {
+        id: string;
+        bookTitle?: string;
+        dayNumber?: string;
+        pages?: string;
+        createdAt?: any;
+        updatedAt?: any;
+        [key: string]: any;
+      };
+      
+      console.log("Latest report found:", typedReport.id);
+      console.log("Book title:", typedReport.bookTitle);
+      console.log("Day number:", typedReport.dayNumber);
+      console.log("Pages:", typedReport.pages);
+      
+      return typedReport;
+    } else {
+      console.log("No valid reports found");
+      return null;
+    }
+  } catch (error) {
+    console.error("Error getting latest report:", error);
+    return null;
   }
 };
 
